@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Real Life Among Us</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
@@ -30,7 +35,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .hidden { display: none !important; }
 
 /* TOP BAR */
-.topbar { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 14px; border-bottom: 1px solid var(--border); background: rgba(8,8,14,0.95); position: sticky; top: 0; z-index: 10; }
+.topbar { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 14px; border-bottom: 1px solid var(--border); background: rgba(8,8,14,0.97); position: sticky; top: 0; z-index: 10; }
 .topbar-title { font-size: 13px; font-weight: 800; color: var(--text); }
 .topbar-right { display: flex; align-items: center; gap: 7px; }
 .topbar-name { font-size: 12px; font-weight: 700; color: var(--text); }
@@ -63,7 +68,6 @@ input::placeholder { color: #666; font-weight: 400; }
 .btn-dark { background: #1a1a28; color: white; border-color: var(--border2); }
 .btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
 .btn-danger { background: rgba(224,82,82,0.12); color: var(--red); border-color: rgba(224,82,82,0.45); }
-.btn-success { background: #152215; color: var(--green); border-color: #2a5a2a; }
 .btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 6px; margin-bottom: 0; width: auto; }
 
 /* LOBBY CODE */
@@ -84,7 +88,7 @@ input::placeholder { color: #666; font-weight: 400; }
 
 /* BADGE */
 .badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
-.b-imp { background: rgba(224,82,82,0.18); color: var(--red); border: 1px solid rgba(224,82,82,0.38); }
+.b-imp  { background: rgba(224,82,82,0.18); color: var(--red); border: 1px solid rgba(224,82,82,0.38); }
 .b-crew { background: rgba(92,184,92,0.18); color: #7ed07e; border: 1px solid rgba(92,184,92,0.38); }
 .b-dead { background: rgba(100,100,100,0.18); color: #888; border: 1px solid rgba(150,150,150,0.28); }
 .b-host { background: rgba(79,195,247,0.13); color: var(--accent); border: 1px solid rgba(79,195,247,0.33); }
@@ -94,24 +98,24 @@ input::placeholder { color: #666; font-weight: 400; }
 .prog-title { font-size: 18px; font-weight: 900; text-align: center; color: white; margin-bottom: 7px; }
 .prog-track { width: 100%; height: 18px; background: #2a2a3a; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); position: relative; }
 .prog-fill { height: 100%; background: white; border-radius: 2px; transition: width .4s ease; }
-.prog-track::before { content:''; position:absolute;inset:0; background: repeating-linear-gradient(-45deg,rgba(255,255,255,0.04) 0,rgba(255,255,255,0.04) 4px,transparent 4px,transparent 10px); pointer-events:none; }
+.prog-track::before { content:''; position:absolute; inset:0; background: repeating-linear-gradient(-45deg,rgba(255,255,255,0.04) 0,rgba(255,255,255,0.04) 4px,transparent 4px,transparent 10px); pointer-events:none; }
 
 /* TASK ROW */
-.t-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; margin-bottom: 4px; background: #17172200; border-radius: 6px; cursor: pointer; transition: background .1s; border: 1px solid #222230; }
+.t-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; margin-bottom: 4px; background: transparent; border-radius: 6px; cursor: pointer; border: 1px solid #222230; transition: background .1s; }
 .t-row:hover { background: #1e1e2e; }
 .t-row.done { border-color: rgba(92,184,92,0.2); background: rgba(92,184,92,0.05); }
 .t-box { width: 15px; height: 15px; border: 2px solid #555; border-radius: 3px; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
 .t-row.done .t-box { background: #378acc; border-color: #378acc; }
 .t-chk { font-size: 10px; color: white; font-weight: 900; }
 .t-name { font-size: 13px; font-weight: 700; color: white; line-height: 1.3; }
-.t-loc { font-size: 11px; color: var(--muted); margin-top: 1px; font-weight: 600; }
+.t-loc  { font-size: 11px; color: var(--muted); margin-top: 1px; font-weight: 600; }
 .t-row.done .t-name { color: #888; text-decoration: line-through; }
 
 /* ACTION BUTTONS */
 .act-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; margin-bottom: 8px; background: #16161f; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: white; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: background .12s, transform .1s; }
 .act-btn:active { transform: scale(0.97); background: #1e1e2e; }
 .act-kill { border-color: rgba(224,82,82,0.5); color: var(--red); background: rgba(224,82,82,0.07); }
-.act-sab { border-color: rgba(255,165,0,0.45); color: #ffa500; background: rgba(255,165,0,0.06); }
+.act-sab  { border-color: rgba(255,165,0,0.45); color: #ffa500; background: rgba(255,165,0,0.06); }
 
 /* RANGE */
 input[type=range] { accent-color: var(--accent); width: 100%; margin-bottom: 12px; }
@@ -128,7 +132,7 @@ input[type=range] { accent-color: var(--accent); width: 100%; margin-bottom: 12p
 /* EMERGENCY MEETING BOX */
 .em-box { border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 22px 18px; width: 100%; text-align: center; background: rgba(255,255,255,0.02); margin-bottom: 14px; }
 .em-title { font-size: 26px; font-weight: 900; color: white; margin-bottom: 10px; }
-.em-sub { font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+.em-sub   { font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
 .em-timer { font-size: 20px; font-weight: 900; color: white; margin-bottom: 14px; }
 
 /* VOTE GRID */
@@ -139,7 +143,7 @@ input[type=range] { accent-color: var(--accent); width: 100%; margin-bottom: 12p
 .v-card.dead-vc { pointer-events: none; }
 .v-cname { font-size: 10px; font-weight: 800; color: white; text-align: center; }
 .v-card.dead-vc .v-cname { color: #444; }
-.voted-lbl { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; color: #ffd700; background: rgba(0,0,0,0.85); padding: 2px 5px; border-radius: 4px; white-space: nowrap; letter-spacing: 0.5px; }
+.voted-lbl { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; color: #ffd700; background: rgba(0,0,0,0.85); padding: 2px 5px; border-radius: 4px; white-space: nowrap; }
 .dead-x-overlay { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 34px; color: var(--red); font-weight: 900; pointer-events: none; opacity: 0.9; line-height: 1; text-shadow: 0 0 4px rgba(0,0,0,0.9); }
 
 /* VOTE RESULT */
@@ -157,6 +161,11 @@ input[type=range] { accent-color: var(--accent); width: 100%; margin-bottom: 12p
 /* NOTIF */
 .notif { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); background: #1b1b2e; border: 1px solid var(--border2); border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 700; z-index: 200; text-align: center; max-width: 320px; width: 90%; box-shadow: 0 6px 24px rgba(0,0,0,0.5); animation: sld .3s ease; pointer-events: none; }
 @keyframes sld { from{opacity:0;transform:translateX(-50%) translateY(-14px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+/* LOADING OVERLAY */
+.loading-overlay { position: fixed; inset: 0; background: rgba(8,8,14,0.92); z-index: 300; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.spinner { width: 40px; height: 40px; border: 3px solid rgba(79,195,247,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .scroll { max-height: 200px; overflow-y: auto; }
 .scroll::-webkit-scrollbar { width: 3px; }
@@ -200,7 +209,8 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
   <div class="sub-title" style="margin-bottom:26px;">Enter the 4-letter lobby code</div>
   <div style="width:100%;margin-bottom:14px;">
     <div class="sec-lbl">Lobby Code</div>
-    <input type="text" id="join-code" placeholder="ABCD" maxlength="4" style="font-size:30px;text-align:center;letter-spacing:10px;text-transform:uppercase;" />
+    <input type="text" id="join-code" placeholder="ABCD" maxlength="4"
+      style="font-size:30px;text-align:center;letter-spacing:10px;text-transform:uppercase;" />
   </div>
   <button class="btn btn-white" onclick="joinLobby()">Join Lobby →</button>
   <button class="btn btn-ghost" onclick="showScreen('home')">← Back</button>
@@ -216,6 +226,7 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
     <div class="card" style="background:#0d0d18;">
       <span class="sec-lbl">Lobby Code — share with players</span>
       <div class="lcode" id="lcode-host">----</div>
+      <p style="font-size:11px;color:var(--muted);text-align:center;">All players open this same website and enter this code</p>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -245,7 +256,7 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
       </div>
     </div>
     <button class="btn btn-white" id="start-btn" onclick="startGame()" disabled>Start Game</button>
-    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:-2px;">Need at least 4 players & 1 task</p>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:-2px;">Need at least 4 players &amp; 1 task</p>
   </div>
 </div>
 
@@ -352,7 +363,7 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
       <p style="font-size:13px;color:var(--muted);line-height:1.8;font-weight:600;">Please <strong style="color:white;">lay down</strong> exactly where you are and wait. Do not move from your spot until someone reports your body or an emergency meeting is called.</p>
     </div>
     <div style="background:rgba(79,195,247,0.06);border:1px solid rgba(79,195,247,0.18);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.7;font-weight:600;text-align:left;">
-      👁 You can still watch the game. Task progress and other deaths are shown below.
+      👁 You can still watch — task progress and other deaths are shown below.
     </div>
     <div class="prog-wrap" style="text-align:left;">
       <div class="prog-title" style="font-size:14px;margin-bottom:5px;">Crew Task Progress</div>
@@ -374,15 +385,13 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
   <div style="padding:14px 14px 0;width:100%;">
     <div class="em-box">
       <div class="em-title" id="em-heading">Emergency Meeting!</div>
-
       <!-- Gather phase -->
       <div id="gather-phase">
         <div class="em-sub">Head to the meeting area!</div>
         <div class="em-timer" id="gather-time">15 seconds</div>
-        <div style="font-size:11px;color:var(--muted);font-weight:600;">All players shown below</div>
-        <div class="vote-grid" id="gather-player-grid" style="margin-top:12px;"></div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:12px;">Players in this game:</div>
+        <div class="vote-grid" id="gather-grid"></div>
       </div>
-
       <!-- Vote phase -->
       <div id="vote-phase" class="hidden">
         <div class="em-sub">Time remaining before vote:</div>
@@ -431,9 +440,121 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 </div>
 
 <script>
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+//  FIREBASE CONFIG
+//  Using a shared demo project — works out of the box.
+//  For a private game, create your own free Firebase
+//  project at console.firebase.google.com and replace.
+// ══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCkvP5WVhaD_PbeAPjkGTcvexlzyjHnN3s",
+  authDomain: "among-us-irl-d6501.firebaseapp.com",
+  databaseURL: "https://among-us-irl-d6501-default-rtdb.firebaseio.com",
+  projectId: "among-us-irl-d6501",
+  storageBucket: "among-us-irl-d6501.firebasestorage.app",
+  messagingSenderId: "830625097438",
+  appId: "1:830625097438:web:61b87f5f28443c51d9444f"
+};
+
+// ── Try to init Firebase. If it fails (e.g. no network / project not set up)
+//    we fall back to localStorage so the game still works on one device.
+let db = null;
+let useFirebase = false;
+
+async function initFirebase() {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    // Quick connectivity test
+    await db.ref('.info/connected').once('value');
+    useFirebase = true;
+    console.log('Firebase connected');
+  } catch(e) {
+    console.warn('Firebase unavailable, using localStorage fallback:', e.message);
+    useFirebase = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  DATABASE ABSTRACTION
+//  All reads/writes go through these — works with both
+//  Firebase and localStorage fallback.
+// ══════════════════════════════════════════════════════
+const LS_PREFIX = 'airl3_';
+
+async function dbSet(code, data) {
+  if (useFirebase) {
+    await db.ref('lobbies/' + code).set(data);
+  } else {
+    localStorage.setItem(LS_PREFIX + code, JSON.stringify(data));
+    localStorage.setItem(LS_PREFIX + code + '_ts', Date.now()+'');
+  }
+}
+
+async function dbGet(code) {
+  if (useFirebase) {
+    const snap = await db.ref('lobbies/' + code).once('value');
+    return snap.val();
+  } else {
+    try { return JSON.parse(localStorage.getItem(LS_PREFIX + code) || 'null'); } catch { return null; }
+  }
+}
+
+async function dbUpdate(code, updates) {
+  if (useFirebase) {
+    await db.ref('lobbies/' + code).update(updates);
+  } else {
+    const d = await dbGet(code);
+    if (!d) return;
+    // Deep merge updates
+    for (const [k,v] of Object.entries(updates)) {
+      const parts = k.split('/');
+      let obj = d;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (obj[parts[i]] === undefined) obj[parts[i]] = {};
+        obj = obj[parts[i]];
+      }
+      obj[parts[parts.length-1]] = v;
+    }
+    localStorage.setItem(LS_PREFIX + code, JSON.stringify(d));
+    localStorage.setItem(LS_PREFIX + code + '_ts', Date.now()+'');
+  }
+}
+
+let activeListener = null;
+function dbListen(code, callback) {
+  dbUnlisten();
+  if (useFirebase) {
+    const ref = db.ref('lobbies/' + code);
+    ref.on('value', snap => { const d = snap.val(); if (d) callback(d); });
+    activeListener = ref;
+  } else {
+    // Poll localStorage
+    let lastTs = 0;
+    activeListener = setInterval(() => {
+      const ts = parseInt(localStorage.getItem(LS_PREFIX + code + '_ts') || '0');
+      if (ts !== lastTs) {
+        lastTs = ts;
+        try { const d = JSON.parse(localStorage.getItem(LS_PREFIX + code) || 'null'); if (d) callback(d); } catch {}
+      }
+    }, 500);
+  }
+}
+
+function dbUnlisten() {
+  if (activeListener) {
+    if (useFirebase) {
+      activeListener.off();
+    } else {
+      clearInterval(activeListener);
+    }
+    activeListener = null;
+  }
+}
+
+// ══════════════════════════════════════════════════════
 //  CHARACTER SVG
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 const CHARS = [
   {id:'cyan',   body:'#38c9c9', shade:'#239999', name:'Cyan'  },
   {id:'blue',   body:'#1a3ab5', shade:'#122880', name:'Blue'  },
@@ -448,7 +569,7 @@ const CHARS = [
 ];
 
 function svgChar(colorId, w, h, ghost, deadX) {
-  const c = CHARS.find(x=>x.id===colorId)||CHARS[0];
+  const c = CHARS.find(x=>x.id===colorId) || CHARS[0];
   const body  = ghost ? '#3a3a3a' : c.body;
   const shade = ghost ? '#252525' : c.shade;
   const visor = ghost ? '#404040' : '#a8d8ea';
@@ -465,43 +586,62 @@ function svgChar(colorId, w, h, ghost, deadX) {
     ${deadX ? `<text x="3" y="38" font-size="34" fill="#e05252" font-weight="900" opacity="0.9" font-family="sans-serif">✕</text>` : ''}
   </svg>`;
 }
+function miniChar(colorId, ghost) { return svgChar(colorId, 22, 26, ghost||false, false); }
 
-function miniChar(colorId, ghost) {
-  return svgChar(colorId, 22, 26, ghost||false, false);
-}
-
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  STATE
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 const S = {
-  myName:'', myColor:'cyan', myId: Math.random().toString(36).slice(2,9),
+  myName:'', myColor:'cyan',
+  myId: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
   isHost:false, lobbyCode:'', role:'', isAlive:true,
   myVote:null, voteSubmitted:false,
   killCooldown:0, killTimer:null, discTimer:null, gatherTimer:null,
+  // local cache of lobby data so we can render without extra reads
+  lobbyCache: null,
 };
 
-// ══════════════════════════════════════════════
-//  LOCAL STORAGE (cross-tab)
-// ══════════════════════════════════════════════
-const KEY = () => 'airl2_' + S.lobbyCode;
-const TSK = () => 'airl2_' + S.lobbyCode + '_ts';
-function getLS() { try{return JSON.parse(localStorage.getItem(KEY())||'null');}catch{return null;} }
-function setLS(d) { localStorage.setItem(KEY(), JSON.stringify(d)); localStorage.setItem(TSK(), Date.now()+''); }
-function mkLobby(code) {
-  const d = { code, phase:'lobby', players:[], tasks:[], settings:{impCount:1,killCooldown:30,discTime:180},
-    taskProgress:{}, votes:{}, meetingType:null, meetingCaller:null, winner:null, ejectedId:null, gameEvent:null };
-  S.lobbyCode = code; setLS(d); return d;
+// ══════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('screen-'+id).classList.remove('hidden');
 }
 
-let pollId=null, lastTs=0;
-function poll(fn){ stopPoll(); pollId=setInterval(()=>{ const t=parseInt(localStorage.getItem(TSK())||'0'); if(t!==lastTs){lastTs=t;const d=getLS();if(d)fn(d);} },500); }
-function stopPoll(){ if(pollId){clearInterval(pollId);pollId=null;} }
+let notifTimer = null;
+function notify(msg, dur=3500) {
+  const el = document.getElementById('notif');
+  el.textContent = msg; el.classList.remove('hidden');
+  if(notifTimer) clearTimeout(notifTimer);
+  notifTimer = setTimeout(()=>el.classList.add('hidden'), dur);
+}
 
-// ══════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════
+function showLoading(msg) {
+  let el = document.getElementById('loading-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-overlay';
+    el.className = 'loading-overlay';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div class="spinner"></div><div style="font-size:14px;font-weight:700;color:var(--muted);">${msg||'Loading...'}</div>`;
+  el.classList.remove('hidden');
+}
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  if (el) el.classList.add('hidden');
+}
+
+function genCode() { return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]).join(''); }
+
+function setTopbar(id, name, colorId) {
+  const el = document.getElementById(id); if(!el) return;
+  el.innerHTML = miniChar(colorId) + `<span class="topbar-name">${name} ▾</span>`;
+}
+
 function makeStars() {
-  const c=document.getElementById('stars');
+  const c = document.getElementById('stars');
   for(let i=0;i<70;i++){
     const s=document.createElement('div'); s.className='star';
     const sz=Math.random()*2.5+0.5;
@@ -511,266 +651,430 @@ function makeStars() {
 }
 
 function buildCharGrid() {
-  const g=document.getElementById('char-grid');
-  CHARS.forEach(c=>{
-    const el=document.createElement('div');
-    el.className='char-opt'+(c.id===S.myColor?' sel':'');
-    el.innerHTML=svgChar(c.id,44,52,false,false)+`<span>${c.name}</span>`;
-    el.onclick=()=>{ document.querySelectorAll('.char-opt').forEach(x=>x.classList.remove('sel')); el.classList.add('sel'); S.myColor=c.id; };
+  const g = document.getElementById('char-grid');
+  CHARS.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'char-opt' + (c.id===S.myColor?' sel':'');
+    el.innerHTML = svgChar(c.id,44,52,false,false) + `<span>${c.name}</span>`;
+    el.onclick = () => {
+      document.querySelectorAll('.char-opt').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel'); S.myColor = c.id;
+    };
     g.appendChild(el);
   });
 }
 
-function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden')); document.getElementById('screen-'+id).classList.remove('hidden'); }
-function notify(msg,dur=3500){ const el=document.getElementById('notif'); el.textContent=msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),dur); }
-function genCode(){ return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]).join(''); }
-
-function setTopbar(id, name, colorId) {
-  const el=document.getElementById(id); if(!el) return;
-  el.innerHTML=miniChar(colorId)+`<span class="topbar-name">${name} ▾</span>`;
+// ══════════════════════════════════════════════════════
+//  LOBBY DATA HELPERS
+// ══════════════════════════════════════════════════════
+function playersArray(d) {
+  if (!d.players) return [];
+  if (Array.isArray(d.players)) return d.players;
+  return Object.values(d.players);
+}
+function tasksArray(d) {
+  if (!d.tasks) return [];
+  if (Array.isArray(d.tasks)) return d.tasks;
+  return Object.values(d.tasks);
+}
+function taskProgMap(d) {
+  return d.taskProgress || {};
 }
 
-// ══════════════════════════════════════════════
-//  HOME
-// ══════════════════════════════════════════════
-function goCreate() {
-  const n=document.getElementById('home-name').value.trim();
+function pRow(p) {
+  return `<div class="p-row">
+    <div style="width:24px;height:28px;flex-shrink:0;">${miniChar(p.color)}</div>
+    <span class="p-name">${p.name}</span>
+    ${p.isHost?'<span class="badge b-host">HOST</span>':''}
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  HOME → CREATE
+// ══════════════════════════════════════════════════════
+async function goCreate() {
+  const n = document.getElementById('home-name').value.trim();
   if(!n){notify('Enter your name first');return;}
   S.myName=n; S.isHost=true;
-  const code=genCode(), d=mkLobby(code);
-  d.players.push({id:S.myId,name:n,color:S.myColor,isHost:true,alive:true,role:''});
-  setLS(d);
-  document.getElementById('lcode-host').textContent=code;
-  setTopbar('tb-host',n,S.myColor);
+  showLoading('Creating lobby...');
+  const code = genCode();
+  S.lobbyCode = code;
+  const d = {
+    code, phase:'lobby',
+    players: { [S.myId]: {id:S.myId,name:n,color:S.myColor,isHost:true,alive:true,role:''} },
+    tasks: {},
+    settings:{impCount:1,killCooldown:30,discTime:180},
+    taskProgress:{}, votes:{}, meetingType:null, meetingCaller:null,
+    winner:null, ejectedId:null, gameEvent:null
+  };
+  await dbSet(code, d);
+  hideLoading();
+  document.getElementById('lcode-host').textContent = code;
+  setTopbar('tb-host', n, S.myColor);
   renderHostLobby(d);
   showScreen('lobby-host');
-  poll(onLobbyHost);
+  dbListen(code, onLobbyData);
 }
+
+// ══════════════════════════════════════════════════════
+//  JOIN
+// ══════════════════════════════════════════════════════
 function goJoin() {
-  const n=document.getElementById('home-name').value.trim();
+  const n = document.getElementById('home-name').value.trim();
   if(!n){notify('Enter your name first');return;}
   S.myName=n; showScreen('join');
 }
-function joinLobby() {
-  const code=document.getElementById('join-code').value.trim().toUpperCase();
+
+async function joinLobby() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
   if(code.length!==4){notify('Enter a 4-letter code');return;}
-  S.lobbyCode=code;
-  const d=getLS();
-  if(!d){notify('Lobby not found');return;}
-  if(d.phase!=='lobby'){notify('Game already started');return;}
-  if(!d.players.find(p=>p.id===S.myId))
-    d.players.push({id:S.myId,name:S.myName,color:S.myColor,isHost:false,alive:true,role:''});
-  setLS(d);
-  document.getElementById('lcode-player').textContent=code;
-  setTopbar('tb-player',S.myName,S.myColor);
-  renderPlayerLobby(d);
+  showLoading('Joining lobby...');
+  S.lobbyCode = code;
+  const d = await dbGet(code);
+  if(!d){hideLoading();notify('Lobby not found — check the code and try again');return;}
+  if(d.phase!=='lobby'){hideLoading();notify('Game already in progress');return;}
+  const players = playersArray(d);
+  if(players.length>=10){hideLoading();notify('Lobby is full');return;}
+
+  // Add this player
+  await dbUpdate(code, {
+    [`players/${S.myId}`]: {id:S.myId,name:S.myName,color:S.myColor,isHost:false,alive:true,role:''}
+  });
+
+  hideLoading();
+  document.getElementById('lcode-player').textContent = code;
+  setTopbar('tb-player', S.myName, S.myColor);
+  const updated = await dbGet(code);
+  renderPlayerLobby(updated);
   showScreen('lobby-player');
-  poll(onLobbyPlayer);
+  dbListen(code, onLobbyData);
 }
 
-// ══════════════════════════════════════════════
-//  LOBBY
-// ══════════════════════════════════════════════
-function pRow(p) {
-  return `<div class="p-row"><div style="width:24px;height:28px;flex-shrink:0;">${miniChar(p.color)}</div><span class="p-name">${p.name}</span>${p.isHost?'<span class="badge b-host">HOST</span>':''}</div>`;
-}
-function renderHostLobby(d) {
-  document.getElementById('host-p-badge').textContent=d.players.length+' / 10';
-  document.getElementById('host-p-list').innerHTML=d.players.map(pRow).join('');
-  document.getElementById('start-btn').disabled=(d.players.length<4||d.tasks.length<1);
-  const tl=document.getElementById('task-setup-list');
-  tl.innerHTML=d.tasks.map((t,i)=>{
-    const nm=typeof t==='object'?t.name:t, loc=typeof t==='object'?t.location:'';
-    return `<div class="t-row" style="cursor:default;">
-      <div class="t-text" style="flex:1;"><div class="t-name">${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
-      <button class="btn btn-ghost btn-sm" onclick="removeTask(${i})" style="color:var(--red);border-color:rgba(224,82,82,0.35);">✕</button>
-    </div>`;
-  }).join('')||`<p style="font-size:12px;color:var(--muted);">No tasks yet.</p>`;
-}
-function renderPlayerLobby(d) {
-  document.getElementById('player-p-badge').textContent=d.players.length;
-  document.getElementById('player-p-list').innerHTML=d.players.map(pRow).join('');
-}
-function onLobbyHost(d){ renderHostLobby(d); if(d.phase==='game'){stopPoll();revealRole(d);} }
-function onLobbyPlayer(d){ renderPlayerLobby(d); if(d.phase==='game'){stopPoll();revealRole(d);} }
+// ══════════════════════════════════════════════════════
+//  LOBBY DATA LISTENER (shared for both host & player)
+// ══════════════════════════════════════════════════════
+function onLobbyData(d) {
+  S.lobbyCache = d;
+  const screen = document.querySelector('.screen:not(.hidden)');
+  const screenId = screen ? screen.id : '';
 
-// ══════════════════════════════════════════════
-//  SETTINGS & TASKS
-// ══════════════════════════════════════════════
-function saveSettings() {
-  const d=getLS(); if(!d) return;
-  d.settings.impCount=parseInt(document.getElementById('s-imp').value);
-  d.settings.killCooldown=parseInt(document.getElementById('s-cd').value);
-  d.settings.discTime=parseInt(document.getElementById('s-dt').value);
-  setLS(d);
+  if(d.phase==='lobby') {
+    if(screenId==='screen-lobby-host') renderHostLobby(d);
+    if(screenId==='screen-lobby-player') renderPlayerLobby(d);
+  }
+  if(d.phase==='game' && (screenId==='screen-lobby-host'||screenId==='screen-lobby-player')) {
+    dbUnlisten();
+    revealRole(d);
+  }
+  if(d.phase==='game') {
+    if(screenId==='screen-game-crew') { renderCrewTasks(d); updateDeadInGame(d); }
+    if(screenId==='screen-game-imp')  { renderImpTasks(d); }
+  }
+  if(d.phase==='discussion' && screenId==='screen-game-crew') { dbUnlisten(); startDiscussion(d); }
+  if(d.phase==='discussion' && screenId==='screen-game-imp')  { dbUnlisten(); if(S.killTimer)clearInterval(S.killTimer); startDiscussion(d); }
+  if(d.phase==='discussion' && screenId==='screen-dead')      { dbUnlisten(); startDiscussion(d); }
+  if(d.phase==='vote_result' && screenId==='screen-discussion') { clearInterval(S.discTimer); dbUnlisten(); showVoteResult(d); }
+  if(d.winner && screenId!=='screen-victory') { clearInterval(S.discTimer); clearInterval(S.killTimer); dbUnlisten(); showVictory(d); }
+  if(d.phase==='dead_update' || d.phase==='game') {
+    if(screenId==='screen-dead') updateDeadScreen(d);
+  }
 }
-function addTask() {
+
+// ══════════════════════════════════════════════════════
+//  SETTINGS & TASKS (host only)
+// ══════════════════════════════════════════════════════
+async function saveSettings() {
+  await dbUpdate(S.lobbyCode, {
+    'settings/impCount':  parseInt(document.getElementById('s-imp').value),
+    'settings/killCooldown': parseInt(document.getElementById('s-cd').value),
+    'settings/discTime':  parseInt(document.getElementById('s-dt').value),
+  });
+}
+
+async function addTask() {
   const ni=document.getElementById('ti-name'), li=document.getElementById('ti-loc');
   const nm=ni.value.trim(); if(!nm){notify('Enter a task name');return;}
   const loc=li.value.trim()||'Unknown';
-  const d=getLS(); if(!d) return;
-  d.tasks.push({name:nm,location:loc}); setLS(d);
-  ni.value=''; li.value=''; renderHostLobby(d);
-}
-function removeTask(i){ const d=getLS(); if(!d) return; d.tasks.splice(i,1); setLS(d); renderHostLobby(d); }
-
-// ══════════════════════════════════════════════
-//  START GAME
-// ══════════════════════════════════════════════
-function startGame() {
-  const d=getLS(); if(!d) return;
-  const shuf=[...d.players].sort(()=>Math.random()-.5);
-  const impCount=Math.min(d.settings.impCount,Math.floor(d.players.length/3));
-  const impIds=shuf.slice(0,impCount).map(p=>p.id);
-  d.players.forEach(p=>{ p.role=impIds.includes(p.id)?'imposter':'crewmate'; p.alive=true; });
-  d.players.filter(p=>p.role==='crewmate').forEach(p=>{ d.taskProgress[p.id]={}; d.tasks.forEach((_,i)=>{d.taskProgress[p.id][i]=false;}); });
-  d.phase='game'; d.gameEvent={type:'start',ts:Date.now()}; setLS(d);
+  const taskId = 't_' + Date.now();
+  await dbUpdate(S.lobbyCode, { [`tasks/${taskId}`]: {id:taskId,name:nm,location:loc} });
+  ni.value=''; li.value='';
 }
 
-// ══════════════════════════════════════════════
-//  ROLE REVEAL
-// ══════════════════════════════════════════════
-function revealRole(d) {
-  const me=d.players.find(p=>p.id===S.myId); if(!me) return;
-  S.role=me.role;
-  document.getElementById('role-char').innerHTML=svgChar(me.color,90,105,false,false)+`<div style="font-size:15px;font-weight:800;margin-top:8px;">${me.name}</div>`;
-  if(me.role==='imposter'){
-    document.getElementById('role-card').innerHTML=`<div class="role-panel rp-imp"><div class="rp-title">🔪 IMPOSTER</div><div class="rp-desc">Blend in. Kill crewmates when no one is watching.</div></div>`;
-    const fellows=d.players.filter(p=>p.role==='imposter'&&p.id!==S.myId);
-    if(fellows.length){ document.getElementById('imp-fellows-card').classList.remove('hidden'); document.getElementById('imp-fellows-list').innerHTML=fellows.map(pRow).join(''); }
+async function removeTask(taskId) {
+  if(useFirebase) {
+    await db.ref(`lobbies/${S.lobbyCode}/tasks/${taskId}`).remove();
   } else {
-    document.getElementById('role-card').innerHTML=`<div class="role-panel rp-crew"><div class="rp-title">🚀 CREWMATE</div><div class="rp-desc">Complete all tasks. Vote out the imposters.</div></div>`;
+    const d = await dbGet(S.lobbyCode);
+    if(!d||!d.tasks) return;
+    if(Array.isArray(d.tasks)) d.tasks = d.tasks.filter(t=>(typeof t==='object'?t.id:t)!==taskId);
+    else delete d.tasks[taskId];
+    await dbSet(S.lobbyCode, d);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  LOBBY RENDERS
+// ══════════════════════════════════════════════════════
+function renderHostLobby(d) {
+  const players = playersArray(d);
+  const tasks   = tasksArray(d);
+  document.getElementById('host-p-badge').textContent = players.length + ' / 10';
+  document.getElementById('host-p-list').innerHTML = players.map(pRow).join('');
+  document.getElementById('start-btn').disabled = (players.length<4 || tasks.length<1);
+  const tl = document.getElementById('task-setup-list');
+  tl.innerHTML = tasks.map(t=>{
+    const nm=t.name||t, loc=t.location||'';
+    const tid=t.id||nm;
+    return `<div class="t-row" style="cursor:default;">
+      <div style="flex:1;"><div class="t-name">${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
+      <button class="btn btn-ghost btn-sm" onclick="removeTask('${tid}')" style="color:var(--red);border-color:rgba(224,82,82,0.35);">✕</button>
+    </div>`;
+  }).join('') || `<p style="font-size:12px;color:var(--muted);">No tasks yet.</p>`;
+}
+
+function renderPlayerLobby(d) {
+  const players = playersArray(d);
+  document.getElementById('player-p-badge').textContent = players.length;
+  document.getElementById('player-p-list').innerHTML = players.map(pRow).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  START GAME (host only)
+// ══════════════════════════════════════════════════════
+async function startGame() {
+  const d = await dbGet(S.lobbyCode);
+  const players = playersArray(d);
+  const tasks   = tasksArray(d);
+  if(players.length<4){notify('Need at least 4 players');return;}
+  if(tasks.length<1){notify('Add at least 1 task');return;}
+
+  showLoading('Starting game...');
+  const shuf = [...players].sort(()=>Math.random()-.5);
+  const impCount = Math.min(d.settings.impCount, Math.floor(players.length/3));
+  const impIds = shuf.slice(0,impCount).map(p=>p.id);
+
+  const updates = {};
+  players.forEach(p => {
+    const role = impIds.includes(p.id) ? 'imposter' : 'crewmate';
+    updates[`players/${p.id}/role`]  = role;
+    updates[`players/${p.id}/alive`] = true;
+    if(role==='crewmate') {
+      tasks.forEach(t => {
+        updates[`taskProgress/${p.id}/${t.id||t.name}`] = false;
+      });
+    }
+  });
+  updates['phase'] = 'game';
+  updates['gameEvent'] = {type:'start', ts:Date.now()};
+  await dbUpdate(S.lobbyCode, updates);
+  hideLoading();
+}
+
+// ══════════════════════════════════════════════════════
+//  ROLE REVEAL
+// ══════════════════════════════════════════════════════
+function revealRole(d) {
+  const players = playersArray(d);
+  const me = players.find(p=>p.id===S.myId); if(!me) return;
+  S.role = me.role;
+  document.getElementById('role-char').innerHTML =
+    svgChar(me.color,90,105,false,false) +
+    `<div style="font-size:15px;font-weight:800;margin-top:8px;">${me.name}</div>`;
+  if(me.role==='imposter'){
+    document.getElementById('role-card').innerHTML =
+      `<div class="role-panel rp-imp"><div class="rp-title">🔪 IMPOSTER</div><div class="rp-desc">Blend in. Kill crewmates when no one is watching.</div></div>`;
+    const fellows = players.filter(p=>p.role==='imposter'&&p.id!==S.myId);
+    if(fellows.length){
+      document.getElementById('imp-fellows-card').classList.remove('hidden');
+      document.getElementById('imp-fellows-list').innerHTML = fellows.map(pRow).join('');
+    }
+  } else {
+    document.getElementById('role-card').innerHTML =
+      `<div class="role-panel rp-crew"><div class="rp-title">🚀 CREWMATE</div><div class="rp-desc">Complete all tasks. Vote out the imposters.</div></div>`;
   }
   showScreen('role');
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  GO TO GAME
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function goToGame() {
-  S.isAlive=true;
-  const d=getLS();
+  S.isAlive = true;
+  const d = S.lobbyCache;
   if(S.role==='imposter'){
-    setTopbar('tb-imp',S.myName,S.myColor);
-    if(d){ const f=d.players.filter(p=>p.role==='imposter'&&p.id!==S.myId); if(f.length) document.getElementById('imp-role-fellows-txt').textContent='Fellow imposters: '+f.map(p=>p.name).join(', '); }
-    renderImpTasks(); startKillCD(); showScreen('game-imp'); pollImp();
+    setTopbar('tb-imp', S.myName, S.myColor);
+    const players = d ? playersArray(d) : [];
+    const fellows = players.filter(p=>p.role==='imposter'&&p.id!==S.myId);
+    if(fellows.length) document.getElementById('imp-role-fellows-txt').textContent='Fellow imposters: '+fellows.map(p=>p.name).join(', ');
+    if(d) renderImpTasks(d);
+    startKillCD(d);
+    showScreen('game-imp');
   } else {
-    setTopbar('tb-crew',S.myName,S.myColor);
-    renderCrewTasks(); showScreen('game-crew'); pollCrew();
+    setTopbar('tb-crew', S.myName, S.myColor);
+    if(d) renderCrewTasks(d);
+    showScreen('game-crew');
   }
+  dbListen(S.lobbyCode, onLobbyData);
 }
 
 function toggleRole(who) {
   const pid=who==='crew'?'crew-role-panel':'imp-role-panel';
   const bid=who==='crew'?'crew-role-btn':'imp-role-btn';
   const p=document.getElementById(pid), b=document.getElementById(bid);
-  const hidden=p.classList.contains('hidden');
   p.classList.toggle('hidden');
-  b.textContent=hidden?'Hide Role':'Click for Role';
+  b.textContent=p.classList.contains('hidden')?'Click for Role':'Hide Role';
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  TASKS
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function calcPct(d) {
-  if(!d.tasks||!d.tasks.length) return 0;
-  const crew=d.players.filter(p=>p.role==='crewmate'); if(!crew.length) return 0;
-  let done=0,tot=0;
-  crew.forEach(p=>{ const pg=d.taskProgress[p.id]||{}; tot+=d.tasks.length; done+=Object.values(pg).filter(Boolean).length; });
-  return tot?Math.round(done/tot*100):0;
+  const players = playersArray(d);
+  const tasks   = tasksArray(d);
+  if(!tasks.length) return 0;
+  const crew = players.filter(p=>p.role==='crewmate');
+  if(!crew.length) return 0;
+  const prog = taskProgMap(d);
+  let done=0, tot=0;
+  crew.forEach(p=>{
+    const pp = prog[p.id]||{};
+    tot += tasks.length;
+    done += Object.values(pp).filter(Boolean).length;
+  });
+  return tot ? Math.round(done/tot*100) : 0;
 }
 
-function renderCrewTasks() {
-  const d=getLS(); if(!d) return;
-  const pg=d.taskProgress[S.myId]||{};
-  const done=Object.values(pg).filter(Boolean).length;
-  const pct=d.tasks.length?Math.round(done/d.tasks.length*100):0;
+function renderCrewTasks(d) {
+  const tasks = tasksArray(d);
+  const prog  = (taskProgMap(d)[S.myId])||{};
+  const done  = Object.values(prog).filter(Boolean).length;
+  const pct   = tasks.length ? Math.round(done/tasks.length*100) : 0;
   const bar=document.getElementById('crew-prog'); if(bar) bar.style.width=pct+'%';
   const list=document.getElementById('crew-tasks'); if(!list) return;
-  list.innerHTML=d.tasks.map((t,i)=>{
-    const isDone=pg[i], nm=typeof t==='object'?t.name:t, loc=typeof t==='object'?t.location:'';
-    return `<div class="t-row ${isDone?'done':''}" onclick="toggleTask(${i})">
+  list.innerHTML = tasks.map((t,i)=>{
+    const isDone=prog[t.id||t.name], nm=t.name||t, loc=t.location||'';
+    return `<div class="t-row ${isDone?'done':''}" onclick="toggleTask('${t.id||t.name}')">
       <div class="t-box"><span class="t-chk">${isDone?'✓':''}</span></div>
-      <div class="t-text"><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
+      <div><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
     </div>`;
   }).join('');
-}
-function renderImpTasks() {
-  const d=getLS(); if(!d) return;
-  const pct=calcPct(d);
-  const bar=document.getElementById('imp-prog'); if(bar) bar.style.width=pct+'%';
-  const list=document.getElementById('imp-tasks'); if(!list) return;
-  list.innerHTML=d.tasks.map((t,i)=>{
-    const nm=typeof t==='object'?t.name:t, loc=typeof t==='object'?t.location:'';
-    return `<div class="t-row" style="cursor:default;opacity:0.55;">
-      <div class="t-box"></div>
-      <div class="t-text"><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
-    </div>`;
-  }).join('');
-}
-function toggleTask(i) {
-  const d=getLS(); if(!d||!d.taskProgress[S.myId]) return;
-  d.taskProgress[S.myId][i]=!d.taskProgress[S.myId][i];
-  setLS(d); renderCrewTasks(); checkWin(d);
+  updateDeadInGame(d);
 }
 
-// ══════════════════════════════════════════════
+function updateDeadInGame(d) {
+  const players = playersArray(d);
+  // nothing to show but could update alive count here if needed
+}
+
+function renderImpTasks(d) {
+  const tasks = tasksArray(d);
+  const pct   = calcPct(d);
+  const bar=document.getElementById('imp-prog'); if(bar) bar.style.width=pct+'%';
+  const list=document.getElementById('imp-tasks'); if(!list) return;
+  list.innerHTML = tasks.map((t,i)=>{
+    const nm=t.name||t, loc=t.location||'';
+    return `<div class="t-row" style="cursor:default;opacity:0.55;">
+      <div class="t-box"></div>
+      <div><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleTask(taskId) {
+  const d = await dbGet(S.lobbyCode);
+  const prog = taskProgMap(d);
+  const pp = prog[S.myId]||{};
+  const newVal = !pp[taskId];
+  await dbUpdate(S.lobbyCode, { [`taskProgress/${S.myId}/${taskId}`]: newVal });
+  // Check win after task toggle
+  const updated = await dbGet(S.lobbyCode);
+  await checkWin(updated);
+}
+
+// ══════════════════════════════════════════════════════
 //  KILL
-// ══════════════════════════════════════════════
-function startKillCD() {
-  const d=getLS(); S.killCooldown=d?d.settings.killCooldown:30;
-  const btn=document.getElementById('kill-btn'); const txt=document.getElementById('kill-cd-txt');
+// ══════════════════════════════════════════════════════
+function startKillCD(d) {
+  const cd = d ? d.settings.killCooldown : 30;
+  S.killCooldown = cd;
+  const btn=document.getElementById('kill-btn'), txt=document.getElementById('kill-cd-txt');
   if(btn) btn.style.opacity='0.45';
   if(S.killTimer) clearInterval(S.killTimer);
-  S.killTimer=setInterval(()=>{
+  S.killTimer = setInterval(()=>{
     S.killCooldown--;
-    if(txt) txt.textContent=S.killCooldown>0?`Kill cooldown: ${S.killCooldown}s`:'Kill ready';
-    if(btn) btn.style.opacity=S.killCooldown>0?'0.45':'1';
+    if(txt) txt.textContent = S.killCooldown>0?`Kill cooldown: ${S.killCooldown}s`:'Kill ready';
+    if(btn) btn.style.opacity = S.killCooldown>0?'0.45':'1';
     if(S.killCooldown<=0) clearInterval(S.killTimer);
   },1000);
-  if(txt) txt.textContent=`Kill cooldown: ${S.killCooldown}s`;
+  if(txt) txt.textContent = `Kill cooldown: ${cd}s`;
 }
-function pressKill() {
+
+async function pressKill() {
   if(S.killCooldown>0){notify(`Kill on cooldown — ${S.killCooldown}s remaining`);return;}
-  const d=getLS(); if(!d) return;
-  const alive=d.players.filter(p=>p.alive&&p.id!==S.myId&&p.role==='crewmate');
+  const d = await dbGet(S.lobbyCode);
+  const players = playersArray(d);
+  const alive = players.filter(p=>p.alive&&p.id!==S.myId&&p.role==='crewmate');
   if(!alive.length){notify('No crewmates nearby');return;}
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.87);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
   ov.innerHTML=`<div style="background:#111118;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:20px;width:100%;max-width:360px;">
     <div style="font-size:17px;font-weight:900;text-align:center;color:var(--red);margin-bottom:14px;">☠ Select Target</div>
-    ${alive.map(p=>`<div class="p-row" style="cursor:pointer;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.09);" onclick="killPlayer('${p.id}')"><div style="width:26px;height:30px;">${miniChar(p.color)}</div><span class="p-name">${p.name}</span></div>`).join('')}
+    ${alive.map(p=>`<div class="p-row" style="cursor:pointer;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.09);" onclick="killPlayer('${p.id}')">
+      <div style="width:26px;height:30px;">${miniChar(p.color)}</div>
+      <span class="p-name">${p.name}</span>
+    </div>`).join('')}
     <button class="btn btn-ghost" style="margin-top:12px;" onclick="this.closest('[style*=fixed]').remove()">Cancel</button>
   </div>`;
   document.body.appendChild(ov);
 }
-function killPlayer(tid) {
-  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif')e.remove();});
-  const d=getLS(); if(!d) return;
-  const t=d.players.find(p=>p.id===tid); if(!t) return;
-  t.alive=false; d.gameEvent={type:'kill',victimName:t.name,ts:Date.now()};
-  setLS(d); notify('💀 Killed '+t.name); startKillCD(); checkWin(d);
+
+async function killPlayer(tid) {
+  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif'&&e.id!=='loading-overlay')e.remove();});
+  showLoading('Processing...');
+  await dbUpdate(S.lobbyCode, {
+    [`players/${tid}/alive`]: false,
+    gameEvent: {type:'kill',victimId:tid,ts:Date.now()}
+  });
+  const d = await dbGet(S.lobbyCode);
+  const t = playersArray(d).find(p=>p.id===tid);
+  hideLoading();
+  notify('💀 Killed ' + (t?t.name:'target'));
+  startKillCD(d);
+  await checkWin(d);
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  MEETING
-// ══════════════════════════════════════════════
-function pressEmergency() {
-  const d=getLS(); if(!d||d.phase!=='game') return;
-  d.phase='discussion'; d.votes={}; d.meetingType='emergency'; d.meetingCaller=S.myName;
-  d.gameEvent={type:'emergency',by:S.myId,byName:S.myName,ts:Date.now()}; setLS(d);
-  notify('🚨 Emergency! Get to the meeting area!'); startDiscussion(d);
-}
-function reportKill() {
-  const d=getLS(); if(!d||d.phase!=='game') return;
-  d.phase='discussion'; d.votes={}; d.meetingType='report'; d.meetingCaller=S.myName;
-  d.gameEvent={type:'report',by:S.myId,byName:S.myName,ts:Date.now()}; setLS(d);
-  notify('☠ Body reported! Get to the meeting area!'); startDiscussion(d);
+// ══════════════════════════════════════════════════════
+async function pressEmergency() {
+  const d = await dbGet(S.lobbyCode);
+  if(!d||d.phase!=='game') return;
+  showLoading('Calling meeting...');
+  await dbUpdate(S.lobbyCode, {
+    phase:'discussion', votes:{}, meetingType:'emergency',
+    meetingCaller:S.myName, gameEvent:{type:'emergency',byName:S.myName,ts:Date.now()}
+  });
+  hideLoading();
+  notify('🚨 Emergency! Get to the meeting area!');
+  startDiscussion(await dbGet(S.lobbyCode));
 }
 
-// ══════════════════════════════════════════════
+async function reportKill() {
+  const d = await dbGet(S.lobbyCode);
+  if(!d||d.phase!=='game') return;
+  showLoading('Reporting...');
+  await dbUpdate(S.lobbyCode, {
+    phase:'discussion', votes:{}, meetingType:'report',
+    meetingCaller:S.myName, gameEvent:{type:'report',byName:S.myName,ts:Date.now()}
+  });
+  hideLoading();
+  notify('☠ Body reported! Get to the meeting area!');
+  startDiscussion(await dbGet(S.lobbyCode));
+}
+
+// ══════════════════════════════════════════════════════
 //  DEATH
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function confirmDead() {
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -783,38 +1087,53 @@ function confirmDead() {
   </div>`;
   document.body.appendChild(ov);
 }
-function markDead() {
-  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif')e.remove();});
-  const d=getLS(); if(!d) return;
-  const me=d.players.find(p=>p.id===S.myId);
-  if(me){me.alive=false;d.gameEvent={type:'death',pid:S.myId,ts:Date.now()};setLS(d);}
-  S.isAlive=false; if(S.killTimer)clearInterval(S.killTimer);
-  stopPoll(); showDeadScreen(d); pollDead(); checkWin(d);
+
+async function markDead() {
+  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif'&&e.id!=='loading-overlay')e.remove();});
+  showLoading('Updating...');
+  await dbUpdate(S.lobbyCode, {
+    [`players/${S.myId}/alive`]: false,
+    gameEvent: {type:'death', pid:S.myId, ts:Date.now()}
+  });
+  S.isAlive = false;
+  if(S.killTimer) clearInterval(S.killTimer);
+  dbUnlisten();
+  const d = await dbGet(S.lobbyCode);
+  hideLoading();
+  await checkWin(d);
+  showDeadScreen(d);
+  dbListen(S.lobbyCode, onLobbyData);
 }
+
 function showDeadScreen(d) {
-  setTopbar('tb-dead',S.myName,S.myColor);
-  const pct=calcPct(d);
-  const bar=document.getElementById('dead-prog'); if(bar) bar.style.width=pct+'%';
-  const others=d.players.filter(p=>!p.alive&&p.id!==S.myId);
-  document.getElementById('dead-list').innerHTML=others.length
-    ? others.map(p=>`<div class="p-row"><div style="width:24px;height:28px;">${miniChar(p.color,true)}</div><span class="p-name" style="color:#666;">${p.name}</span><span class="badge b-dead">dead</span></div>`).join('')
-    : `<p style="font-size:12px;color:var(--muted);">No other dead players yet.</p>`;
+  setTopbar('tb-dead', S.myName, S.myColor);
+  updateDeadScreen(d);
   showScreen('dead');
 }
 
-// ══════════════════════════════════════════════
-//  DISCUSSION
-// ══════════════════════════════════════════════
+function updateDeadScreen(d) {
+  const pct = calcPct(d);
+  const bar = document.getElementById('dead-prog'); if(bar) bar.style.width=pct+'%';
+  const others = playersArray(d).filter(p=>!p.alive&&p.id!==S.myId);
+  const listEl = document.getElementById('dead-list');
+  if(listEl) listEl.innerHTML = others.length
+    ? others.map(p=>`<div class="p-row"><div style="width:24px;height:28px;">${miniChar(p.color,true)}</div><span class="p-name" style="color:#666;">${p.name}</span><span class="badge b-dead">dead</span></div>`).join('')
+    : `<p style="font-size:12px;color:var(--muted);">No other dead players yet.</p>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  DISCUSSION / VOTING
+// ══════════════════════════════════════════════════════
 function startDiscussion(d) {
-  stopPoll(); if(S.killTimer)clearInterval(S.killTimer);
-  if(S.discTimer)clearInterval(S.discTimer); if(S.gatherTimer)clearInterval(S.gatherTimer);
+  dbUnlisten();
+  if(S.discTimer) clearInterval(S.discTimer);
+  if(S.gatherTimer) clearInterval(S.gatherTimer);
   S.myVote=null; S.voteSubmitted=false;
 
-  setTopbar('tb-disc',S.myName,S.myColor);
+  setTopbar('tb-disc', S.myName, S.myColor);
   const hEl=document.getElementById('em-heading');
-  if(hEl) hEl.textContent=d.meetingType==='report'?'Body Reported!':'Emergency Meeting!';
+  if(hEl) hEl.textContent = d.meetingType==='report'?'Body Reported!':'Emergency Meeting!';
 
-  // Show gather, hide vote
   document.getElementById('gather-phase').classList.remove('hidden');
   document.getElementById('vote-phase').classList.add('hidden');
   document.getElementById('vote-done').classList.add('hidden');
@@ -822,17 +1141,17 @@ function startDiscussion(d) {
   document.getElementById('confirm-vote').disabled=true;
   document.getElementById('vote-sel-txt').textContent='';
 
-  // Gather grid: show all alive players
-  const gg=document.getElementById('gather-player-grid');
-  if(gg) gg.innerHTML=d.players.filter(p=>p.alive).map(p=>`
-    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+  // Show all alive players in gather grid
+  const gg=document.getElementById('gather-grid');
+  if(gg) gg.innerHTML=playersArray(d).filter(p=>p.alive).map(p=>
+    `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
       ${svgChar(p.color,40,47,false,false)}
       <span style="font-size:10px;font-weight:800;color:white;">${p.name}</span>
     </div>`).join('');
 
   showScreen('discussion');
 
-  // 15s gather countdown
+  // 15s gather countdown then open voting
   let gs=15;
   const gEl=document.getElementById('gather-time'); if(gEl) gEl.textContent='15 seconds';
   S.gatherTimer=setInterval(()=>{
@@ -842,16 +1161,18 @@ function startDiscussion(d) {
       clearInterval(S.gatherTimer);
       document.getElementById('gather-phase').classList.add('hidden');
       document.getElementById('vote-phase').classList.remove('hidden');
-      renderVoteGrid(getLS()||d);
-      startVoteTimer(d);
+      dbGet(S.lobbyCode).then(latest=>{
+        renderVoteGrid(latest||d);
+        startVoteTimer(latest||d);
+      });
     }
   },1000);
 
-  poll(onDisc);
+  dbListen(S.lobbyCode, onLobbyData);
 }
 
 function startVoteTimer(d) {
-  let rem=d.settings.discTime;
+  let rem = d.settings ? d.settings.discTime : 180;
   const el=document.getElementById('vote-timer');
   const fmt=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
   if(el) el.textContent=fmt(rem);
@@ -864,99 +1185,112 @@ function startVoteTimer(d) {
 
 function renderVoteGrid(d) {
   const g=document.getElementById('vote-grid'); if(!g) return;
-  g.innerHTML=d.players.map(p=>{
-    const alive=p.alive;
-    const votes=Object.values(d.votes||{}).filter(v=>v===p.id).length;
-    const iVoted=S.myVote===p.id&&!S.voteSubmitted;
-    const iVotedSub=S.myVote===p.id&&S.voteSubmitted;
-    return `<div class="v-card ${!alive?'dead-vc':''} ${iVoted?'sel':''}" id="vc-${p.id}" onclick="selVote('${p.id}')">
+  const players=playersArray(d);
+  const votes=d.votes||{};
+  g.innerHTML=players.map(p=>{
+    const iVoted = S.myVote===p.id && !S.voteSubmitted;
+    const iVotedSub = S.myVote===p.id && S.voteSubmitted;
+    const vCount = Object.values(votes).filter(v=>v===p.id).length;
+    return `<div class="v-card ${!p.alive?'dead-vc':''} ${iVoted?'sel':''}" id="vc-${p.id}" onclick="selVote('${p.id}')">
       ${iVotedSub?`<div class="voted-lbl">VOTED</div>`:''}
-      ${svgChar(p.color,48,56,!alive,false)}
-      ${!alive?`<div class="dead-x-overlay">✕</div>`:''}
+      ${svgChar(p.color,48,56,!p.alive,false)}
+      ${!p.alive?`<div class="dead-x-overlay">✕</div>`:''}
       <div class="v-cname">${p.name}</div>
-      ${votes>0?`<div style="font-size:10px;color:#ffd700;font-weight:900;">${votes}v</div>`:''}
+      ${vCount>0?`<div style="font-size:10px;color:#ffd700;font-weight:900;">${vCount}v</div>`:''}
     </div>`;
   }).join('');
 }
 
 function selVote(pid) {
   if(S.voteSubmitted) return;
-  const d=getLS(); if(!d) return;
-  const p=d.players.find(x=>x.id===pid); if(!p||!p.alive) return;
-  S.myVote=S.myVote===pid?null:pid;
+  const d=S.lobbyCache; if(!d) return;
+  const p=playersArray(d).find(x=>x.id===pid); if(!p||!p.alive) return;
+  S.myVote = S.myVote===pid ? null : pid;
   renderVoteGrid(d);
   const btn=document.getElementById('confirm-vote'), txt=document.getElementById('vote-sel-txt');
-  if(S.myVote){ btn.disabled=false; const np=d.players.find(x=>x.id===S.myVote); if(txt) txt.textContent='Voting for: '+(np?np.name:'?'); }
-  else { btn.disabled=true; if(txt) txt.textContent=''; }
+  if(S.myVote){
+    btn.disabled=false;
+    const np=playersArray(d).find(x=>x.id===S.myVote);
+    if(txt) txt.textContent='Voting for: '+(np?np.name:'?');
+  } else {
+    btn.disabled=true; if(txt) txt.textContent='';
+  }
 }
 
-function confirmVote() {
+async function confirmVote() {
   if(!S.myVote||S.voteSubmitted) return;
-  const d=getLS(); if(!d) return;
-  d.votes[S.myId]=S.myVote; setLS(d);
   S.voteSubmitted=true;
+  await dbUpdate(S.lobbyCode, { [`votes/${S.myId}`]: S.myVote });
   document.getElementById('vote-actions').classList.add('hidden');
   document.getElementById('vote-done').classList.remove('hidden');
-  renderVoteGrid(d); checkAllVoted(d);
-}
-function skipVote() {
-  if(S.voteSubmitted) return;
-  const d=getLS(); if(!d) return;
-  d.votes[S.myId]='skip'; setLS(d);
-  S.voteSubmitted=true;
-  document.getElementById('vote-actions').classList.add('hidden');
-  document.getElementById('vote-done').classList.remove('hidden');
+  const d=await dbGet(S.lobbyCode);
+  if(d) renderVoteGrid(d);
   checkAllVoted(d);
 }
-function onDisc(d) {
-  const voteShowing=!document.getElementById('vote-phase').classList.contains('hidden');
-  if(voteShowing) renderVoteGrid(d);
-  if(d.phase==='vote_result'){clearInterval(S.discTimer);stopPoll();showVoteResult(d);}
-  if(d.winner){clearInterval(S.discTimer);stopPoll();showVictory(d);}
+
+async function skipVote() {
+  if(S.voteSubmitted) return;
+  S.voteSubmitted=true;
+  await dbUpdate(S.lobbyCode, { [`votes/${S.myId}`]: 'skip' });
+  document.getElementById('vote-actions').classList.add('hidden');
+  document.getElementById('vote-done').classList.remove('hidden');
+  const d=await dbGet(S.lobbyCode);
+  checkAllVoted(d);
 }
+
 function checkAllVoted(d) {
-  const alive=d.players.filter(p=>p.alive);
+  if(!d) return;
+  const alive=playersArray(d).filter(p=>p.alive);
   const cast=Object.keys(d.votes||{}).filter(id=>alive.find(p=>p.id===id)).length;
   if(cast>=alive.length) endVote();
 }
-function endVote() {
-  clearInterval(S.discTimer); stopPoll();
-  const d=getLS(); if(!d) return;
+
+async function endVote() {
+  clearInterval(S.discTimer);
+  dbUnlisten();
+  const d=await dbGet(S.lobbyCode);
+  const votes=d.votes||{};
   const tally={};
-  Object.values(d.votes||{}).forEach(v=>{ if(v!=='skip') tally[v]=(tally[v]||0)+1; });
-  let ejId=null, mx=0, tied=false;
+  Object.values(votes).forEach(v=>{ if(v!=='skip') tally[v]=(tally[v]||0)+1; });
+  let ejId=null,mx=0,tied=false;
   Object.entries(tally).forEach(([id,cnt])=>{ if(cnt>mx){mx=cnt;ejId=id;tied=false;}else if(cnt===mx)tied=true; });
   if(tied||mx===0) ejId=null;
-  if(ejId){ const ej=d.players.find(p=>p.id===ejId); if(ej) ej.alive=false; }
-  d.ejectedId=ejId; d.phase='vote_result'; d.gameEvent={type:'vote_result',ejectedId:ejId,ts:Date.now()};
-  setLS(d); showVoteResult(d); checkWin(d);
+
+  const updates = { phase:'vote_result', ejectedId:ejId||null, gameEvent:{type:'vote_result',ejectedId:ejId||null,ts:Date.now()} };
+  if(ejId) updates[`players/${ejId}/alive`] = false;
+  await dbUpdate(S.lobbyCode, updates);
+
+  const updated=await dbGet(S.lobbyCode);
+  showVoteResult(updated);
+  await checkWin(updated);
 }
 
 function showVoteResult(d) {
-  const ejId=d.ejectedId, ej=ejId?d.players.find(p=>p.id===ejId):null;
-  const tally={};
-  Object.values(d.votes||{}).forEach(v=>{ if(v!=='skip') tally[v]=(tally[v]||0)+1; });
+  const ejId=d.ejectedId, ej=ejId?playersArray(d).find(p=>p.id===ejId):null;
+  const votes=d.votes||{};
+
   // Breakdown
-  const bkEl=document.getElementById('vr-breakdown');
   let bk='';
-  d.players.forEach(voter=>{
-    const v=d.votes[voter.id]; if(!v) return;
-    const target=v==='skip'?null:d.players.find(p=>p.id===v);
+  playersArray(d).forEach(voter=>{
+    const v=votes[voter.id]; if(!v) return;
+    const target=v==='skip'?null:playersArray(d).find(p=>p.id===v);
     bk+=`<div class="vr-row">
       <div style="width:22px;height:26px;flex-shrink:0;">${miniChar(voter.color,!voter.alive)}</div>
       <span style="font-size:12px;font-weight:800;flex:1;">${voter.name}</span>
       <span style="font-size:11px;color:var(--muted);">→</span>
       ${target
-        ? `<div style="width:22px;height:26px;flex-shrink:0;margin-left:6px;">${miniChar(target.color)}</div><span style="font-size:12px;font-weight:800;margin-left:4px;">${target.name}</span>`
+        ? `<div style="width:22px;height:26px;margin-left:6px;">${miniChar(target.color)}</div><span style="font-size:12px;font-weight:800;margin-left:4px;">${target.name}</span>`
         : `<span style="font-size:12px;color:var(--muted);margin-left:6px;font-weight:700;">Skip</span>`}
     </div>`;
   });
+  const bkEl=document.getElementById('vr-breakdown');
   if(bkEl) bkEl.innerHTML=bk||`<p style="font-size:12px;color:var(--muted);">No votes cast.</p>`;
+
   // Ejected char
   const charEl=document.getElementById('vr-ejected-char');
   if(ej) charEl.innerHTML=svgChar(ej.color,68,80,true,false)+`<div style="font-size:11px;color:#777;margin-top:4px;">was ejected</div>`;
-  else charEl.innerHTML=`<div style="font-size:17px;color:var(--muted);font-weight:900;padding:12px 0;">No one was ejected.</div>`;
-  // Message
+  else   charEl.innerHTML=`<div style="font-size:17px;color:var(--muted);font-weight:900;padding:12px 0;">No one was ejected.</div>`;
+
   const msgEl=document.getElementById('vr-msg'), roleEl=document.getElementById('vr-role');
   const contBtn=document.getElementById('vr-continue'), markBtn=document.getElementById('vr-mark-dead');
   if(ej){
@@ -965,64 +1299,75 @@ function showVoteResult(d) {
     if(ejId===S.myId){ contBtn.classList.add('hidden'); markBtn.classList.remove('hidden'); }
     else { contBtn.classList.remove('hidden'); markBtn.classList.add('hidden'); }
   } else {
-    if(msgEl) msgEl.textContent='No majority vote — nobody was ejected.';
+    if(msgEl) msgEl.textContent='No majority — nobody was ejected.';
     if(roleEl) roleEl.textContent='';
     contBtn.classList.remove('hidden'); markBtn.classList.add('hidden');
   }
   showScreen('vote-result');
-  poll(d=>{ if(d.winner){stopPoll();showVictory(d);} });
+  dbListen(S.lobbyCode, onLobbyData);
 }
 
-function markEjectedDead() {
-  S.isAlive=false; stopPoll();
-  const d=getLS(); showDeadScreen(d); pollDead();
+async function markEjectedDead() {
+  S.isAlive=false; dbUnlisten();
+  const d=await dbGet(S.lobbyCode);
+  showDeadScreen(d);
+  dbListen(S.lobbyCode, onLobbyData);
 }
-function backToGame() {
-  const d=getLS(); if(!d) return;
-  d.phase='game'; d.votes={}; d.ejectedId=null; d.gameEvent={type:'resume',ts:Date.now()}; setLS(d);
-  stopPoll();
+
+async function backToGame() {
+  dbUnlisten();
+  await dbUpdate(S.lobbyCode, {
+    phase:'game', votes:{}, ejectedId:null, gameEvent:{type:'resume',ts:Date.now()}
+  });
+  const d=await dbGet(S.lobbyCode);
+  S.lobbyCache=d;
   if(S.isAlive){
-    if(S.role==='imposter'){ setTopbar('tb-imp',S.myName,S.myColor); renderImpTasks(); startKillCD(); showScreen('game-imp'); pollImp(); }
-    else { setTopbar('tb-crew',S.myName,S.myColor); renderCrewTasks(); showScreen('game-crew'); pollCrew(); }
-  } else { showDeadScreen(d); pollDead(); }
+    if(S.role==='imposter'){ setTopbar('tb-imp',S.myName,S.myColor); renderImpTasks(d); startKillCD(d); showScreen('game-imp'); }
+    else { setTopbar('tb-crew',S.myName,S.myColor); renderCrewTasks(d); showScreen('game-crew'); }
+  } else {
+    showDeadScreen(d);
+  }
+  dbListen(S.lobbyCode, onLobbyData);
 }
 
-// ══════════════════════════════════════════════
-//  POLL HANDLERS
-// ══════════════════════════════════════════════
-function pollCrew(){ poll(d=>{ if(!d)return; renderCrewTasks(); if(d.phase==='discussion'){stopPoll();startDiscussion(d);} if(d.winner){stopPoll();showVictory(d);} }); }
-function pollImp(){  poll(d=>{ if(!d)return; renderImpTasks();  if(d.phase==='discussion'){stopPoll();if(S.killTimer)clearInterval(S.killTimer);startDiscussion(d);} if(d.winner){stopPoll();showVictory(d);} }); }
-function pollDead(){ poll(d=>{ if(!d)return;
-  const pct=calcPct(d), bar=document.getElementById('dead-prog'); if(bar) bar.style.width=pct+'%';
-  const others=d.players.filter(p=>!p.alive&&p.id!==S.myId);
-  const listEl=document.getElementById('dead-list');
-  if(listEl) listEl.innerHTML=others.length?others.map(p=>`<div class="p-row"><div style="width:24px;height:28px;">${miniChar(p.color,true)}</div><span class="p-name" style="color:#666;">${p.name}</span><span class="badge b-dead">dead</span></div>`).join(''):`<p style="font-size:12px;color:var(--muted);">No other dead players yet.</p>`;
-  if(d.phase==='discussion'){stopPoll();startDiscussion(d);} if(d.winner){stopPoll();showVictory(d);} }); }
-
-// ══════════════════════════════════════════════
-//  WIN
-// ══════════════════════════════════════════════
-function checkWin(d) {
+// ══════════════════════════════════════════════════════
+//  WIN CONDITIONS
+// ══════════════════════════════════════════════════════
+async function checkWin(d) {
   if(d.winner) return;
-  const aC=d.players.filter(p=>p.alive&&p.role==='crewmate');
-  const aI=d.players.filter(p=>p.alive&&p.role==='imposter');
-  if(d.players.filter(p=>p.role==='imposter').every(p=>!p.alive)){ d.winner='crewmates'; d.phase='end'; d.gameEvent={type:'over',winner:'crewmates',ts:Date.now()}; setLS(d); return; }
-  if(aI.length>=aC.length){ d.winner='imposters'; d.phase='end'; d.gameEvent={type:'over',winner:'imposters',ts:Date.now()}; setLS(d); return; }
-  if(calcPct(d)>=100){ d.winner='crewmates'; d.phase='end'; d.gameEvent={type:'over',winner:'crewmates',reason:'tasks',ts:Date.now()}; setLS(d); return; }
-  setLS(d);
+  const players=playersArray(d);
+  const aC=players.filter(p=>p.alive&&p.role==='crewmate');
+  const aI=players.filter(p=>p.alive&&p.role==='imposter');
+  const allImpDead=players.filter(p=>p.role==='imposter').every(p=>!p.alive);
+
+  let winner=null, reason=null;
+  if(allImpDead){ winner='crewmates'; }
+  else if(aI.length>=aC.length){ winner='imposters'; }
+  else if(calcPct(d)>=100){ winner='crewmates'; reason='tasks'; }
+
+  if(winner){
+    await dbUpdate(S.lobbyCode, { winner, phase:'end', gameEvent:{type:'over',winner,reason:reason||null,ts:Date.now()} });
+    const updated=await dbGet(S.lobbyCode);
+    showVictory(updated);
+  }
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  VICTORY
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 function showVictory(d) {
-  stopPoll(); clearInterval(S.discTimer); clearInterval(S.killTimer); clearInterval(S.gatherTimer);
-  const winner=d.winner, iWon=(winner==='crewmates'&&S.role==='crewmate')||(winner==='imposters'&&S.role==='imposter');
+  dbUnlisten(); clearInterval(S.discTimer); clearInterval(S.killTimer); clearInterval(S.gatherTimer);
+  const winner=d.winner;
+  const iWon=(winner==='crewmates'&&S.role==='crewmate')||(winner==='imposters'&&S.role==='imposter');
   document.getElementById('vic-icon').textContent=iWon?'🎉':'💀';
   document.getElementById('vic-title').textContent=winner==='crewmates'?'CREWMATES WIN!':'IMPOSTERS WIN!';
   document.getElementById('vic-title').style.color=winner==='crewmates'?'#7ed07e':'var(--red)';
-  document.getElementById('vic-sub').textContent=(winner==='crewmates'?(d.gameEvent?.reason==='tasks'?'All tasks completed!':'Imposter voted out!')+(iWon?' You survived.':' Better luck next time.'):('Imposters eliminated the crew!')+(iWon?' Well played.':' You were eliminated.'));
-  document.getElementById('vic-list').innerHTML=d.players.map(p=>`
+  const ev=d.gameEvent||{};
+  document.getElementById('vic-sub').textContent=
+    winner==='crewmates'
+      ? (ev.reason==='tasks'?'All tasks completed!':'Imposter voted out!')+(iWon?' You survived.':' Better luck next time.')
+      : 'Imposters eliminated the crew!'+(iWon?' Well played.':' You were eliminated.');
+  document.getElementById('vic-list').innerHTML=playersArray(d).map(p=>`
     <div class="p-row">
       <div style="width:26px;height:30px;">${miniChar(p.color,!p.alive)}</div>
       <span class="p-name">${p.name}</span>
@@ -1032,20 +1377,29 @@ function showVictory(d) {
   showScreen('victory');
 }
 
-function playAgain() {
+async function playAgain() {
   if(S.isHost){
-    const d=getLS(); if(!d){showScreen('home');return;}
-    d.phase='lobby'; d.players.forEach(p=>{delete p.role;p.alive=true;});
-    d.taskProgress={}; d.votes={}; d.winner=null; d.ejectedId=null; d.gameEvent=null;
-    setLS(d); setTopbar('tb-host',S.myName,S.myColor); renderHostLobby(d); showScreen('lobby-host'); poll(onLobbyHost);
+    dbUnlisten();
+    const d=await dbGet(S.lobbyCode);
+    const players=playersArray(d);
+    const updates={phase:'lobby',taskProgress:{},votes:{},winner:null,ejectedId:null,gameEvent:null};
+    players.forEach(p=>{ updates[`players/${p.id}/role`]=''; updates[`players/${p.id}/alive`]=true; });
+    await dbUpdate(S.lobbyCode, updates);
+    const updated=await dbGet(S.lobbyCode);
+    setTopbar('tb-host',S.myName,S.myColor);
+    renderHostLobby(updated);
+    showScreen('lobby-host');
+    dbListen(S.lobbyCode, onLobbyData);
   } else {
-    setTopbar('tb-player',S.myName,S.myColor); showScreen('lobby-player'); poll(onLobbyPlayer);
+    setTopbar('tb-player',S.myName,S.myColor);
+    showScreen('lobby-player');
+    dbListen(S.lobbyCode, onLobbyData);
   }
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  BOOT
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 makeStars();
 buildCharGrid();
 
@@ -1054,6 +1408,9 @@ document.getElementById('join-code').addEventListener('keyup',e=>{if(e.key==='En
 document.getElementById('home-name').addEventListener('keyup',e=>{if(e.key==='Enter')document.getElementById('home-name').blur();});
 document.getElementById('ti-name').addEventListener('keyup',e=>{if(e.key==='Enter')document.getElementById('ti-loc').focus();});
 document.getElementById('ti-loc').addEventListener('keyup',e=>{if(e.key==='Enter')addTask();});
+
+// Initialize Firebase on load
+initFirebase().catch(console.warn);
 </script>
 </body>
 </html>
