@@ -244,6 +244,8 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
       <input type="range" id="s-imp" min="1" max="2" value="1" oninput="document.getElementById('v-imp').textContent=this.value;saveSettings();">
       <div class="lbl-row"><span class="lbl-sm">Kill Cooldown (sec)</span><span id="v-cd" style="font-size:13px;font-weight:800;">30</span></div>
       <input type="range" id="s-cd" min="10" max="60" value="30" step="5" oninput="document.getElementById('v-cd').textContent=this.value;saveSettings();">
+      <div class="lbl-row"><span class="lbl-sm">Emergency Cooldown (sec)</span><span id="v-ec" style="font-size:13px;font-weight:800;">30</span></div>
+      <input type="range" id="s-ec" min="1" max="60" value="30" step="1" oninput="document.getElementById('v-ec').textContent=this.value;saveSettings();">
       <div class="lbl-row"><span class="lbl-sm">Discussion Time (sec)</span><span id="v-dt" style="font-size:13px;font-weight:800;">180</span></div>
       <input type="range" id="s-dt" min="60" max="300" value="180" step="30" oninput="document.getElementById('v-dt').textContent=this.value;saveSettings();" style="margin-bottom:0;">
     </div>
@@ -324,7 +326,9 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
       <div class="prog-track"><div class="prog-fill" id="crew-prog" style="width:0%"></div></div>
     </div>
     <div id="crew-tasks" style="margin-bottom:14px;"></div>
-    <button class="act-btn" onclick="pressEmergency()">Emergency Meeting</button>
+    <button class="act-btn" id="emergency-btn-crew" onclick="pressEmergency()">
+      Emergency Meeting &nbsp;<span id="emergency-cd-txt-crew" style="font-size:12px;opacity:0.8;font-weight:700;"></span>
+    </button>
     <button class="act-btn" onclick="reportKill()">Report Kill</button>
     <button class="act-btn" style="color:var(--muted);border-color:rgba(255,255,255,0.1);" onclick="confirmDead()">Died</button>
     <div class="footer">© Real Life Among Us</div>
@@ -348,7 +352,9 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
       <div class="prog-track"><div class="prog-fill" id="imp-prog" style="width:0%"></div></div>
     </div>
     <div id="imp-tasks" style="margin-bottom:14px;"></div>
-    <button class="act-btn" onclick="pressEmergency()">Emergency Meeting</button>
+    <button class="act-btn" id="emergency-btn-imp" onclick="pressEmergency()">
+      Emergency Meeting &nbsp;<span id="emergency-cd-txt-imp" style="font-size:12px;opacity:0.8;font-weight:700;"></span>
+    </button>
     <button class="act-btn" onclick="reportKill()">Report Kill</button>
     <button class="act-btn act-kill" id="kill-btn" onclick="pressKill()" style="margin-bottom:4px;" disabled>
       Kill &nbsp;<span id="kill-cd-txt" style="font-size:12px;opacity:0.8;font-weight:700;"></span>
@@ -433,8 +439,10 @@ hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
       <div id="vr-breakdown"></div>
     </div>
     <div id="vr-msg" style="font-size:14px;line-height:1.8;margin-bottom:6px;font-weight:700;"></div>
-    <div id="vr-role" style="font-size:13px;margin-bottom:20px;font-weight:800;"></div>
-    <button class="btn btn-white" id="vr-continue" onclick="backToGame()">Continue Game →</button>
+    <div id="vr-role" style="font-size:13px;margin-bottom:16px;font-weight:800;"></div>
+    <!-- Auto-resume countdown (shown for non-ejected players) -->
+    <div id="vr-auto-resume" style="font-size:13px;color:var(--muted);font-weight:700;margin-bottom:12px;"></div>
+    <!-- Only shown to the ejected player so they can mark themselves dead -->
     <button class="btn btn-danger hidden" id="vr-mark-dead" onclick="markEjectedDead()">I Was Ejected — Mark Me Dead</button>
   </div>
 </div>
@@ -624,6 +632,7 @@ const S = {
   isHost:false, lobbyCode:'', role:'', isAlive:true, isReady:false,
   myVote:null, voteSubmitted:false,
   killCooldown:0, killTimer:null, discTimer:null, gatherTimer:null,
+  emergencyCooldown:0, emergencyTimer:null,
   // local cache of lobby data so we can render without extra reads
   lobbyCache: null,
 };
@@ -730,7 +739,7 @@ async function goCreate() {
     code, phase:'lobby',
     players: { [S.myId]: {id:S.myId,name:n,color:S.myColor,isHost:true,alive:true,role:'',ready:false} },
     tasks: {},
-    settings:{impCount:1,killCooldown:30,discTime:180},
+    settings:{impCount:1,killCooldown:30,emergencyCooldown:30,discTime:180},
     taskProgress:{}, votes:{}, meetingType:null, meetingCaller:null,
     winner:null, ejectedId:null, gameEvent:null
   };
@@ -816,9 +825,10 @@ function onLobbyData(d) {
 // ══════════════════════════════════════════════════════
 async function saveSettings() {
   await dbUpdate(S.lobbyCode, {
-    'settings/impCount':  parseInt(document.getElementById('s-imp').value),
-    'settings/killCooldown': parseInt(document.getElementById('s-cd').value),
-    'settings/discTime':  parseInt(document.getElementById('s-dt').value),
+    'settings/impCount':        parseInt(document.getElementById('s-imp').value),
+    'settings/killCooldown':    parseInt(document.getElementById('s-cd').value),
+    'settings/emergencyCooldown': parseInt(document.getElementById('s-ec').value),
+    'settings/discTime':        parseInt(document.getElementById('s-dt').value),
   });
 }
 
@@ -889,19 +899,24 @@ async function selectLobbyColor(colorId, gridId, takenColors) {
 async function toggleReady() {
   S.isReady = !S.isReady;
   await dbUpdate(S.lobbyCode, { [`players/${S.myId}/ready`]: S.isReady });
-  // Update ready button UI
-  const btnId = S.isHost ? 'host-ready-btn' : 'player-ready-btn';
-  const btn = document.getElementById(btnId);
-  if(btn) {
-    btn.textContent = S.isReady ? '✗ Unready' : '✓ Ready Up';
-    btn.className = S.isReady ? 'btn btn-danger' : 'btn btn-white';
-    btn.style.marginTop = '4px'; btn.style.marginBottom = '0';
-  }
-  // Rebuild color grid to show locked state
+  updateReadyBtn(S.isHost ? 'host-ready-btn' : 'player-ready-btn', S.isReady);
+  // Rebuild color grid to show locked/unlocked state
   const d = await dbGet(S.lobbyCode);
   if(d) {
     const taken = playersArray(d).filter(p=>p.id!==S.myId).map(p=>p.color);
     buildLobbyCharGrid(S.isHost ? 'char-grid-host' : 'char-grid-player', taken);
+  }
+}
+
+function updateReadyBtn(btnId, isReady) {
+  const btn = document.getElementById(btnId);
+  if(!btn) return;
+  if(isReady) {
+    btn.textContent = 'Readied Up ✓';
+    btn.style.cssText = 'margin-top:4px;margin-bottom:0;background:#1a3a1a;color:#7ed07e;border:2px solid #2d6b2d;font-family:Nunito,sans-serif;font-size:14px;font-weight:800;width:100%;padding:12px 16px;border-radius:8px;cursor:pointer;';
+  } else {
+    btn.textContent = '✓ Ready Up';
+    btn.style.cssText = 'margin-top:4px;margin-bottom:0;background:white;color:#111;border:1px solid white;font-family:Nunito,sans-serif;font-size:14px;font-weight:800;width:100%;padding:12px 16px;border-radius:8px;cursor:pointer;';
   }
 }
 
@@ -929,12 +944,7 @@ function renderHostLobby(d) {
   const me = players.find(p=>p.id===S.myId);
   if(me) {
     S.isReady = me.ready || false;
-    const btn = document.getElementById('host-ready-btn');
-    if(btn) {
-      btn.textContent = S.isReady ? '✗ Unready' : '✓ Ready Up';
-      btn.className = S.isReady ? 'btn btn-danger' : 'btn btn-white';
-      btn.style.marginTop = '4px'; btn.style.marginBottom = '0';
-    }
+    updateReadyBtn('host-ready-btn', S.isReady);
   }
 
   const tl = document.getElementById('task-setup-list');
@@ -960,12 +970,7 @@ function renderPlayerLobby(d) {
   const me = players.find(p=>p.id===S.myId);
   if(me) {
     S.isReady = me.ready || false;
-    const btn = document.getElementById('player-ready-btn');
-    if(btn) {
-      btn.textContent = S.isReady ? '✗ Unready' : '✓ Ready Up';
-      btn.className = S.isReady ? 'btn btn-danger' : 'btn btn-white';
-      btn.style.marginTop = '4px'; btn.style.marginBottom = '0';
-    }
+    updateReadyBtn('player-ready-btn', S.isReady);
   }
 }
 
@@ -990,11 +995,10 @@ async function startGame() {
     const role = impIds.includes(p.id) ? 'imposter' : 'crewmate';
     updates[`players/${p.id}/role`]  = role;
     updates[`players/${p.id}/alive`] = true;
-    if(role==='crewmate') {
-      tasks.forEach(t => {
-        updates[`taskProgress/${p.id}/${t.id||t.name}`] = false;
-      });
-    }
+  });
+  // Shared global task progress — same checklist for everyone
+  tasks.forEach(t => {
+    updates[`taskProgress/${t.id||t.name}`] = false;
   });
   updates['phase'] = 'game';
   updates['gameEvent'] = {type:'start', ts:Date.now()};
@@ -1024,6 +1028,24 @@ function revealRole(d) {
     document.getElementById('role-card').innerHTML =
       `<div class="role-panel rp-crew"><div class="rp-title">🚀 CREWMATE</div><div class="rp-desc">Complete all tasks. Vote out the imposters.</div></div>`;
   }
+
+  // Replace button with 5-second auto-start countdown
+  const btn = document.getElementById('role-ready-btn');
+  if(btn) {
+    btn.disabled = true;
+    btn.textContent = 'Starting in 5...';
+    btn.style.opacity = '0.5';
+  }
+  let countdown = 5;
+  const cdInterval = setInterval(()=>{
+    countdown--;
+    if(btn) btn.textContent = countdown > 0 ? `Starting in ${countdown}...` : 'Starting...';
+    if(countdown <= 0) {
+      clearInterval(cdInterval);
+      goToGame();
+    }
+  }, 1000);
+
   showScreen('role');
 }
 
@@ -1040,10 +1062,12 @@ function goToGame() {
     if(fellows.length) document.getElementById('imp-role-fellows-txt').textContent='Fellow imposters: '+fellows.map(p=>p.name).join(', ');
     if(d) renderImpTasks(d);
     startKillCD(d);
+    startEmergencyCD(d);
     showScreen('game-imp');
   } else {
     setTopbar('tb-crew', S.myName, S.myColor);
     if(d) renderCrewTasks(d);
+    startEmergencyCD(d);
     showScreen('game-crew');
   }
   dbListen(S.lobbyCode, onLobbyData);
@@ -1061,52 +1085,41 @@ function toggleRole(who) {
 //  TASKS
 // ══════════════════════════════════════════════════════
 function calcPct(d) {
-  const players = playersArray(d);
-  const tasks   = tasksArray(d);
+  const tasks = tasksArray(d);
   if(!tasks.length) return 0;
-  const crew = players.filter(p=>p.role==='crewmate');
-  if(!crew.length) return 0;
-  const prog = taskProgMap(d);
-  let done=0, tot=0;
-  crew.forEach(p=>{
-    const pp = prog[p.id]||{};
-    tot += tasks.length;
-    done += Object.values(pp).filter(Boolean).length;
-  });
-  return tot ? Math.round(done/tot*100) : 0;
+  const prog = d.taskProgress || {};
+  const done = tasks.filter(t => prog[t.id||t.name] === true).length;
+  return Math.round(done / tasks.length * 100);
 }
 
 function renderCrewTasks(d) {
   const tasks = tasksArray(d);
-  const prog  = (taskProgMap(d)[S.myId])||{};
-  const done  = Object.values(prog).filter(Boolean).length;
-  const pct   = tasks.length ? Math.round(done/tasks.length*100) : 0;
+  const prog  = d.taskProgress || {};
+  const pct   = calcPct(d);
   const bar=document.getElementById('crew-prog'); if(bar) bar.style.width=pct+'%';
   const list=document.getElementById('crew-tasks'); if(!list) return;
   list.innerHTML = tasks.map((t,i)=>{
-    const isDone=prog[t.id||t.name], nm=t.name||t, loc=t.location||'';
-    return `<div class="t-row ${isDone?'done':''}" onclick="toggleTask('${t.id||t.name}')">
+    const taskId=t.id||t.name, isDone=prog[taskId]===true, nm=t.name||t, loc=t.location||'';
+    return `<div class="t-row ${isDone?'done':''}" onclick="toggleTask('${taskId}')">
       <div class="t-box"><span class="t-chk">${isDone?'✓':''}</span></div>
       <div><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
     </div>`;
   }).join('');
-  updateDeadInGame(d);
 }
 
-function updateDeadInGame(d) {
-  const players = playersArray(d);
-  // nothing to show but could update alive count here if needed
-}
+function updateDeadInGame(d) {}
 
 function renderImpTasks(d) {
   const tasks = tasksArray(d);
+  const prog  = d.taskProgress || {};
   const pct   = calcPct(d);
   const bar=document.getElementById('imp-prog'); if(bar) bar.style.width=pct+'%';
   const list=document.getElementById('imp-tasks'); if(!list) return;
+  // Imposters see the shared task list too (read-only, so they can pretend to do tasks)
   list.innerHTML = tasks.map((t,i)=>{
-    const nm=t.name||t, loc=t.location||'';
-    return `<div class="t-row" style="cursor:default;opacity:0.55;">
-      <div class="t-box"></div>
+    const taskId=t.id||t.name, isDone=prog[taskId]===true, nm=t.name||t, loc=t.location||'';
+    return `<div class="t-row ${isDone?'done':''}" style="cursor:default;opacity:${isDone?'0.5':'0.7'};">
+      <div class="t-box"><span class="t-chk">${isDone?'✓':''}</span></div>
       <div><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
     </div>`;
   }).join('');
@@ -1114,11 +1127,9 @@ function renderImpTasks(d) {
 
 async function toggleTask(taskId) {
   const d = await dbGet(S.lobbyCode);
-  const prog = taskProgMap(d);
-  const pp = prog[S.myId]||{};
-  const newVal = !pp[taskId];
-  await dbUpdate(S.lobbyCode, { [`taskProgress/${S.myId}/${taskId}`]: newVal });
-  // Check win after task toggle
+  const prog = d.taskProgress || {};
+  const newVal = !(prog[taskId] === true);
+  await dbUpdate(S.lobbyCode, { [`taskProgress/${taskId}`]: newVal });
   const updated = await dbGet(S.lobbyCode);
   await checkWin(updated);
 }
@@ -1146,36 +1157,35 @@ function startKillCD(d) {
 }
 
 async function pressKill() {
-  const d = await dbGet(S.lobbyCode);
-  const players = playersArray(d);
-  const alive = players.filter(p=>p.alive&&p.id!==S.myId&&p.role==='crewmate');
-  if(!alive.length){notify('No crewmates nearby');return;}
-  const ov=document.createElement('div');
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.87);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
-  ov.innerHTML=`<div style="background:#111118;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:20px;width:100%;max-width:360px;">
-    <div style="font-size:17px;font-weight:900;text-align:center;color:var(--red);margin-bottom:14px;">☠ Select Target</div>
-    ${alive.map(p=>`<div class="p-row" style="cursor:pointer;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.09);" onclick="killPlayer('${p.id}')">
-      <div style="width:26px;height:30px;">${miniChar(p.color)}</div>
-      <span class="p-name">${p.name}</span>
-    </div>`).join('')}
-    <button class="btn btn-ghost" style="margin-top:12px;" onclick="this.closest('[style*=fixed]').remove()">Cancel</button>
-  </div>`;
-  document.body.appendChild(ov);
-}
-
-async function killPlayer(tid) {
-  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif'&&e.id!=='loading-overlay')e.remove();});
   showLoading('Processing...');
   await dbUpdate(S.lobbyCode, {
-    [`players/${tid}/alive`]: false,
-    gameEvent: {type:'kill',victimId:tid,ts:Date.now()}
+    gameEvent: {type:'kill', byId:S.myId, ts:Date.now()}
   });
-  const d = await dbGet(S.lobbyCode);
-  const t = playersArray(d).find(p=>p.id===tid);
   hideLoading();
-  notify('💀 Killed ' + (t?t.name:'target'));
+  notify('💀 Kill registered! Start the cooldown.');
+  const d = await dbGet(S.lobbyCode);
   startKillCD(d);
   await checkWin(d);
+}
+
+function startEmergencyCD(d) {
+  const cd = d?.settings?.emergencyCooldown ?? 30;
+  S.emergencyCooldown = cd;
+  const btns = ['emergency-btn-crew','emergency-btn-imp'];
+  const txts = ['emergency-cd-txt-crew','emergency-cd-txt-imp'];
+  btns.forEach(id=>{ const b=document.getElementById(id); if(b){ b.disabled=true; b.style.opacity='0.45'; } });
+  txts.forEach(id=>{ const t=document.getElementById(id); if(t) t.textContent=`(${cd}s)`; });
+  if(S.emergencyTimer) clearInterval(S.emergencyTimer);
+  S.emergencyTimer = setInterval(()=>{
+    S.emergencyCooldown--;
+    if(S.emergencyCooldown > 0) {
+      txts.forEach(id=>{ const t=document.getElementById(id); if(t) t.textContent=`(${S.emergencyCooldown}s)`; });
+    } else {
+      clearInterval(S.emergencyTimer);
+      btns.forEach(id=>{ const b=document.getElementById(id); if(b){ b.disabled=false; b.style.opacity='1'; } });
+      txts.forEach(id=>{ const t=document.getElementById(id); if(t) t.textContent=''; });
+    }
+  }, 1000);
 }
 
 // ══════════════════════════════════════════════════════
@@ -1257,14 +1267,12 @@ function updateDeadScreen(d) {
   const pct = calcPct(d);
   const bar = document.getElementById('dead-prog'); if(bar) bar.style.width=pct+'%';
 
-  // Render tasks read-only (use crewmate's own progress if available, else show all tasks greyed)
   const tasks = tasksArray(d);
-  const prog = S.role === 'crewmate' ? (taskProgMap(d)[S.myId]||{}) : {};
+  const prog  = d.taskProgress || {};
   const taskEl = document.getElementById('dead-tasks');
   if(taskEl) {
     taskEl.innerHTML = tasks.map((t,i)=>{
-      const isDone = prog[t.id||t.name];
-      const nm = t.name||t, loc = t.location||'';
+      const taskId=t.id||t.name, isDone=prog[taskId]===true, nm=t.name||t, loc=t.location||'';
       return `<div class="t-row ${isDone?'done':''}" style="cursor:default;opacity:0.7;">
         <div class="t-box"><span class="t-chk">${isDone?'✓':''}</span></div>
         <div><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
@@ -1286,6 +1294,7 @@ function startDiscussion(d) {
   dbUnlisten();
   if(S.discTimer) clearInterval(S.discTimer);
   if(S.gatherTimer) clearInterval(S.gatherTimer);
+  if(S.emergencyTimer) clearInterval(S.emergencyTimer);
   S.myVote=null; S.voteSubmitted=false;
 
   setTopbar('tb-disc', S.myName, S.myColor);
@@ -1295,16 +1304,25 @@ function startDiscussion(d) {
   document.getElementById('gather-phase').classList.remove('hidden');
   document.getElementById('vote-phase').classList.add('hidden');
   document.getElementById('vote-done').classList.add('hidden');
-  document.getElementById('vote-actions').classList.remove('hidden');
   document.getElementById('confirm-vote').disabled=true;
   document.getElementById('vote-sel-txt').textContent='';
 
-  // Show all alive players in gather grid
+  // Dead players cannot vote at all — hide the entire vote actions section
+  if(!S.isAlive) {
+    document.getElementById('vote-actions').classList.add('hidden');
+    document.getElementById('vote-done').classList.remove('hidden');
+    document.getElementById('vote-done').textContent = '👻 You are dead — you cannot vote.';
+  } else {
+    document.getElementById('vote-actions').classList.remove('hidden');
+    document.getElementById('vote-done').textContent = '✓ Vote submitted — waiting for others...';
+  }
+
+  // Show all players (alive & dead) in gather grid
   const gg=document.getElementById('gather-grid');
-  if(gg) gg.innerHTML=playersArray(d).filter(p=>p.alive).map(p=>
+  if(gg) gg.innerHTML=playersArray(d).map(p=>
     `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-      ${svgChar(p.color,40,47,false,false)}
-      <span style="font-size:10px;font-weight:800;color:white;">${p.name}</span>
+      ${svgChar(p.color,40,47,!p.alive,false)}
+      <span style="font-size:10px;font-weight:800;color:${p.alive?'white':'#555'};">${p.name}</span>
     </div>`).join('');
 
   showScreen('discussion');
@@ -1404,9 +1422,9 @@ async function skipVote() {
 
 function checkAllVoted(d) {
   if(!d) return;
-  const alive=playersArray(d).filter(p=>p.alive);
-  const cast=Object.keys(d.votes||{}).filter(id=>alive.find(p=>p.id===id)).length;
-  if(cast>=alive.length) endVote();
+  const alive = playersArray(d).filter(p=>p.alive);
+  const cast = Object.keys(d.votes||{}).filter(id=>alive.find(p=>p.id===id)).length;
+  if(cast >= alive.length) endVote();
 }
 
 async function endVote() {
@@ -1433,7 +1451,7 @@ function showVoteResult(d) {
   const ejId=d.ejectedId, ej=ejId?playersArray(d).find(p=>p.id===ejId):null;
   const votes=d.votes||{};
 
-  // Breakdown
+  // Breakdown — only show alive voters (dead can't vote)
   let bk='';
   playersArray(d).forEach(voter=>{
     const v=votes[voter.id]; if(!v) return;
@@ -1456,29 +1474,57 @@ function showVoteResult(d) {
   else   charEl.innerHTML=`<div style="font-size:17px;color:var(--muted);font-weight:900;padding:12px 0;">No one was ejected.</div>`;
 
   const msgEl=document.getElementById('vr-msg'), roleEl=document.getElementById('vr-role');
-  const contBtn=document.getElementById('vr-continue'), markBtn=document.getElementById('vr-mark-dead');
+  const markBtn=document.getElementById('vr-mark-dead');
+  const resumeEl=document.getElementById('vr-auto-resume');
+
   if(ej){
     if(msgEl) msgEl.innerHTML=`<strong>${ej.name}</strong> was ejected from the game.`;
     if(roleEl){ roleEl.textContent=ej.role==='imposter'?'✓ They were an Imposter.':'✗ They were NOT an Imposter.'; roleEl.style.color=ej.role==='imposter'?'#7ed07e':'var(--red)'; }
-    if(ejId===S.myId){ contBtn.classList.add('hidden'); markBtn.classList.remove('hidden'); }
-    else { contBtn.classList.remove('hidden'); markBtn.classList.add('hidden'); }
   } else {
     if(msgEl) msgEl.textContent='No majority — nobody was ejected.';
     if(roleEl) roleEl.textContent='';
-    contBtn.classList.remove('hidden'); markBtn.classList.add('hidden');
   }
+
+  // If I was ejected: show the mark-dead button, no auto-resume
+  if(ejId === S.myId) {
+    markBtn.classList.remove('hidden');
+    if(resumeEl) resumeEl.textContent = 'Please mark yourself as dead below.';
+  } else {
+    // Everyone else: auto-resume in 5 seconds
+    markBtn.classList.add('hidden');
+    let cd = 5;
+    if(resumeEl) resumeEl.textContent = `Game resumes in ${cd}s...`;
+    const cdInt = setInterval(()=>{
+      cd--;
+      if(resumeEl) resumeEl.textContent = cd > 0 ? `Game resumes in ${cd}s...` : 'Resuming...';
+      if(cd <= 0){
+        clearInterval(cdInt);
+        backToGame();
+      }
+    }, 1000);
+  }
+
   showScreen('vote-result');
   dbListen(S.lobbyCode, onLobbyData);
 }
 
 async function markEjectedDead() {
-  S.isAlive=false; dbUnlisten();
+  S.isAlive=false;
+  dbUnlisten();
+  // Update Firebase so others see this player as dead
+  await dbUpdate(S.lobbyCode, {
+    [`players/${S.myId}/alive`]: false,
+  });
   const d=await dbGet(S.lobbyCode);
   showDeadScreen(d);
   dbListen(S.lobbyCode, onLobbyData);
 }
 
 async function backToGame() {
+  // Don't auto-resume if we were ejected and haven't marked ourselves dead yet
+  const screen = document.querySelector('.screen:not(.hidden)');
+  if(screen && screen.id === 'screen-vote-result' && !S.isAlive && S.myId === (S.lobbyCache?.ejectedId)) return;
+
   dbUnlisten();
   await dbUpdate(S.lobbyCode, {
     phase:'game', votes:{}, ejectedId:null, gameEvent:{type:'resume',ts:Date.now()}
@@ -1486,8 +1532,8 @@ async function backToGame() {
   const d=await dbGet(S.lobbyCode);
   S.lobbyCache=d;
   if(S.isAlive){
-    if(S.role==='imposter'){ setTopbar('tb-imp',S.myName,S.myColor); renderImpTasks(d); startKillCD(d); showScreen('game-imp'); }
-    else { setTopbar('tb-crew',S.myName,S.myColor); renderCrewTasks(d); showScreen('game-crew'); }
+    if(S.role==='imposter'){ setTopbar('tb-imp',S.myName,S.myColor); renderImpTasks(d); startKillCD(d); startEmergencyCD(d); showScreen('game-imp'); }
+    else { setTopbar('tb-crew',S.myName,S.myColor); renderCrewTasks(d); startEmergencyCD(d); showScreen('game-crew'); }
   } else {
     showDeadScreen(d);
   }
@@ -1520,17 +1566,27 @@ async function checkWin(d) {
 //  VICTORY
 // ══════════════════════════════════════════════════════
 function showVictory(d) {
-  dbUnlisten(); clearInterval(S.discTimer); clearInterval(S.killTimer); clearInterval(S.gatherTimer);
+  dbUnlisten(); clearInterval(S.discTimer); clearInterval(S.killTimer); clearInterval(S.gatherTimer); clearInterval(S.emergencyTimer);
   const winner=d.winner;
   const iWon=(winner==='crewmates'&&S.role==='crewmate')||(winner==='imposters'&&S.role==='imposter');
-  document.getElementById('vic-icon').textContent=iWon?'🎉':'💀';
-  document.getElementById('vic-title').textContent=winner==='crewmates'?'CREWMATES WIN!':'IMPOSTERS WIN!';
-  document.getElementById('vic-title').style.color=winner==='crewmates'?'#7ed07e':'var(--red)';
+  const iLost = !iWon;
+
+  document.getElementById('vic-icon').textContent = iWon ? '🎉' : '💀';
+  document.getElementById('vic-title').textContent = winner==='crewmates' ? 'CREWMATES WIN!' : 'IMPOSTERS WIN!';
+  // Winner sees green, loser sees red
+  document.getElementById('vic-title').style.color = iWon ? '#7ed07e' : 'var(--red)';
+
   const ev=d.gameEvent||{};
-  document.getElementById('vic-sub').textContent=
-    winner==='crewmates'
-      ? (ev.reason==='tasks'?'All tasks completed!':'Imposter voted out!')+(iWon?' You survived.':' Better luck next time.')
-      : 'Imposters eliminated the crew!'+(iWon?' Well played.':' You were eliminated.');
+  let subMsg = '';
+  if(winner==='crewmates') {
+    const reason = ev.reason==='tasks' ? 'All tasks were completed!' : 'The imposter was voted out!';
+    subMsg = iWon ? `${reason} You survived.` : `${reason} You were eliminated.`;
+  } else {
+    subMsg = iWon ? 'The crew was eliminated. Well played.' : 'The imposters eliminated the crew. Better luck next time.';
+  }
+  document.getElementById('vic-sub').textContent = subMsg;
+  document.getElementById('vic-sub').style.color = iLost ? 'var(--red)' : 'var(--muted)';
+
   document.getElementById('vic-list').innerHTML=playersArray(d).map(p=>`
     <div class="p-row">
       <div style="width:26px;height:30px;">${miniChar(p.color,!p.alive)}</div>
