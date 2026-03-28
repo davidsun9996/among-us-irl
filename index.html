@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Real Life Among Us</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --bg: #0a0a10;
+  --surface: #111118;
+  --surface2: #1a1a24;
+  --border: rgba(255,255,255,0.12);
+  --border2: rgba(255,255,255,0.22);
+  --text: #ffffff;
+  --muted: #aaaaaa;
+  --accent: #4fc3f7;
+  --red: #e05252;
+  --green: #5cb85c;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+.stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.star { position: absolute; background: white; border-radius: 50%; animation: tw var(--d,3s) var(--dl,0s) infinite alternate; }
+@keyframes tw { from{opacity:.04} to{opacity:.55} }
+
+.screen { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 0 0 40px; max-width: 480px; margin: 0 auto; }
+.hidden { display: none !important; }
+
+/* TOP BAR */
+.topbar { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 14px; border-bottom: 1px solid var(--border); background: rgba(8,8,14,0.95); position: sticky; top: 0; z-index: 10; }
+.topbar-title { font-size: 13px; font-weight: 800; color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 7px; }
+.topbar-name { font-size: 12px; font-weight: 700; color: var(--text); }
+
+/* HOME */
+.big-title { font-size: 30px; font-weight: 900; text-align: center; color: white; }
+.sub-title { font-size: 11px; color: var(--muted); text-align: center; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
+
+/* INPUTS */
+input[type=text], input[type=number] { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 11px 14px; color: white; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 600; outline: none; transition: border-color .2s; }
+input:focus { border-color: var(--accent); }
+input::placeholder { color: #666; font-weight: 400; }
+
+/* CHAR GRID */
+.char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; margin-bottom: 20px; }
+.char-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 8px 4px; border-radius: 10px; border: 2px solid transparent; transition: all .15s; }
+.char-opt:active { transform: scale(0.91); }
+.char-opt.sel { border-color: white; background: rgba(255,255,255,0.08); }
+.char-opt span { font-size: 9px; color: var(--muted); font-weight: 700; }
+.char-opt.sel span { color: white; }
+
+/* BUTTONS */
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border2); font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: transform .1s, background .15s; margin-bottom: 8px; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.btn-white { background: white; color: #111; border-color: white; }
+.btn-white:hover { background: #eee; }
+.btn-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.45); }
+.btn-outline:hover { background: rgba(255,255,255,0.06); }
+.btn-dark { background: #1a1a28; color: white; border-color: var(--border2); }
+.btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+.btn-danger { background: rgba(224,82,82,0.12); color: var(--red); border-color: rgba(224,82,82,0.45); }
+.btn-success { background: #152215; color: var(--green); border-color: #2a5a2a; }
+.btn-sm { padding: 6px 11px; font-size: 12px; border-radius: 6px; margin-bottom: 0; width: auto; }
+
+/* LOBBY CODE */
+.lcode { font-size: 42px; font-weight: 900; letter-spacing: 10px; color: var(--accent); text-align: center; padding: 16px 10px; background: #0d0d18; border-radius: 8px; border: 1px solid rgba(79,195,247,0.22); margin-bottom: 8px; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; width: 100%; margin-bottom: 12px; }
+
+/* LABELS */
+.sec-lbl { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; display: block; font-weight: 700; }
+.lbl-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.lbl-sm { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+
+/* PLAYER ROW */
+.p-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.p-row:last-child { border-bottom: none; }
+.p-name { font-size: 13px; font-weight: 700; flex: 1; }
+
+/* BADGE */
+.badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
+.b-imp { background: rgba(224,82,82,0.18); color: var(--red); border: 1px solid rgba(224,82,82,0.38); }
+.b-crew { background: rgba(92,184,92,0.18); color: #7ed07e; border: 1px solid rgba(92,184,92,0.38); }
+.b-dead { background: rgba(100,100,100,0.18); color: #888; border: 1px solid rgba(150,150,150,0.28); }
+.b-host { background: rgba(79,195,247,0.13); color: var(--accent); border: 1px solid rgba(79,195,247,0.33); }
+
+/* PROGRESS BAR */
+.prog-wrap { width: 100%; margin-bottom: 14px; }
+.prog-title { font-size: 18px; font-weight: 900; text-align: center; color: white; margin-bottom: 7px; }
+.prog-track { width: 100%; height: 18px; background: #2a2a3a; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); position: relative; }
+.prog-fill { height: 100%; background: white; border-radius: 2px; transition: width .4s ease; }
+.prog-track::before { content:''; position:absolute;inset:0; background: repeating-linear-gradient(-45deg,rgba(255,255,255,0.04) 0,rgba(255,255,255,0.04) 4px,transparent 4px,transparent 10px); pointer-events:none; }
+
+/* TASK ROW */
+.t-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; margin-bottom: 4px; background: #17172200; border-radius: 6px; cursor: pointer; transition: background .1s; border: 1px solid #222230; }
+.t-row:hover { background: #1e1e2e; }
+.t-row.done { border-color: rgba(92,184,92,0.2); background: rgba(92,184,92,0.05); }
+.t-box { width: 15px; height: 15px; border: 2px solid #555; border-radius: 3px; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.t-row.done .t-box { background: #378acc; border-color: #378acc; }
+.t-chk { font-size: 10px; color: white; font-weight: 900; }
+.t-name { font-size: 13px; font-weight: 700; color: white; line-height: 1.3; }
+.t-loc { font-size: 11px; color: var(--muted); margin-top: 1px; font-weight: 600; }
+.t-row.done .t-name { color: #888; text-decoration: line-through; }
+
+/* ACTION BUTTONS */
+.act-btn { display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; margin-bottom: 8px; background: #16161f; border: 1px solid rgba(255,255,255,0.16); border-radius: 8px; color: white; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: background .12s, transform .1s; }
+.act-btn:active { transform: scale(0.97); background: #1e1e2e; }
+.act-kill { border-color: rgba(224,82,82,0.5); color: var(--red); background: rgba(224,82,82,0.07); }
+.act-sab { border-color: rgba(255,165,0,0.45); color: #ffa500; background: rgba(255,165,0,0.06); }
+
+/* RANGE */
+input[type=range] { accent-color: var(--accent); width: 100%; margin-bottom: 12px; }
+
+/* ROLE PANEL */
+.role-panel { width: 100%; border-radius: 10px; padding: 16px; margin-bottom: 12px; text-align: center; }
+.rp-crew { background: rgba(92,184,92,0.07); border: 1px solid rgba(92,184,92,0.28); }
+.rp-imp  { background: rgba(224,82,82,0.07); border: 1px solid rgba(224,82,82,0.28); }
+.rp-title { font-size: 22px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; }
+.rp-crew .rp-title { color: #7ed07e; }
+.rp-imp  .rp-title { color: var(--red); }
+.rp-desc { font-size: 12px; color: var(--muted); line-height: 1.6; font-weight: 600; }
+
+/* EMERGENCY MEETING BOX */
+.em-box { border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; padding: 22px 18px; width: 100%; text-align: center; background: rgba(255,255,255,0.02); margin-bottom: 14px; }
+.em-title { font-size: 26px; font-weight: 900; color: white; margin-bottom: 10px; }
+.em-sub { font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+.em-timer { font-size: 20px; font-weight: 900; color: white; margin-bottom: 14px; }
+
+/* VOTE GRID */
+.vote-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin: 10px 0 14px; }
+.v-card { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; position: relative; padding: 8px 6px; border-radius: 8px; border: 2px solid transparent; transition: border-color .12s, background .12s; min-width: 62px; user-select: none; }
+.v-card:active { transform: scale(0.94); }
+.v-card.sel { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.07); }
+.v-card.dead-vc { pointer-events: none; }
+.v-cname { font-size: 10px; font-weight: 800; color: white; text-align: center; }
+.v-card.dead-vc .v-cname { color: #444; }
+.voted-lbl { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; color: #ffd700; background: rgba(0,0,0,0.85); padding: 2px 5px; border-radius: 4px; white-space: nowrap; letter-spacing: 0.5px; }
+.dead-x-overlay { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 34px; color: var(--red); font-weight: 900; pointer-events: none; opacity: 0.9; line-height: 1; text-shadow: 0 0 4px rgba(0,0,0,0.9); }
+
+/* VOTE RESULT */
+.vr-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.vr-row:last-child { border-bottom: none; }
+
+/* DEAD SCREEN */
+.dead-box { background: rgba(100,100,100,0.06); border: 1px solid rgba(150,150,150,0.18); border-radius: 12px; padding: 20px 16px; margin-bottom: 14px; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.float { animation: float 3s ease-in-out infinite; }
+
+/* VICTORY */
+.v-title { font-size: 28px; font-weight: 900; letter-spacing: 2px; text-align: center; margin-bottom: 8px; }
+
+/* NOTIF */
+.notif { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); background: #1b1b2e; border: 1px solid var(--border2); border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 700; z-index: 200; text-align: center; max-width: 320px; width: 90%; box-shadow: 0 6px 24px rgba(0,0,0,0.5); animation: sld .3s ease; pointer-events: none; }
+@keyframes sld { from{opacity:0;transform:translateX(-50%) translateY(-14px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+.scroll { max-height: 200px; overflow-y: auto; }
+.scroll::-webkit-scrollbar { width: 3px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+hr.dv { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.footer { font-size: 11px; color: rgba(255,255,255,0.18); text-align: left; padding: 6px 0; width: 100%; margin-top: 8px; }
+.input-row { display: flex; gap: 8px; align-items: center; }
+.input-row input { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div id="notif" class="notif hidden"></div>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<div id="screen-home" class="screen" style="padding:24px 16px 40px;">
+  <div style="margin-top:16px;text-align:center;font-size:50px;margin-bottom:10px;">🚀</div>
+  <div class="big-title">Real Life</div>
+  <div class="big-title" style="color:var(--accent);margin-bottom:4px;">Among Us</div>
+  <div class="sub-title">Play with friends in real life</div>
+
+  <div style="width:100%;margin-bottom:14px;">
+    <div class="sec-lbl">Your Name</div>
+    <input type="text" id="home-name" placeholder="Enter your name..." maxlength="16" />
+  </div>
+
+  <div style="width:100%;">
+    <div class="sec-lbl">Choose Your Character</div>
+    <div class="char-grid" id="char-grid"></div>
+  </div>
+
+  <button class="btn btn-white" onclick="goCreate()">🎮 Create Lobby</button>
+  <button class="btn btn-outline" onclick="goJoin()">🔑 Join with Code</button>
+</div>
+
+<!-- ═══════════════ JOIN ═══════════════ -->
+<div id="screen-join" class="screen hidden" style="padding:60px 16px 40px;">
+  <div style="font-size:48px;text-align:center;margin-bottom:14px;">🔑</div>
+  <div class="big-title" style="margin-bottom:4px;">Join Game</div>
+  <div class="sub-title" style="margin-bottom:26px;">Enter the 4-letter lobby code</div>
+  <div style="width:100%;margin-bottom:14px;">
+    <div class="sec-lbl">Lobby Code</div>
+    <input type="text" id="join-code" placeholder="ABCD" maxlength="4" style="font-size:30px;text-align:center;letter-spacing:10px;text-transform:uppercase;" />
+  </div>
+  <button class="btn btn-white" onclick="joinLobby()">Join Lobby →</button>
+  <button class="btn btn-ghost" onclick="showScreen('home')">← Back</button>
+</div>
+
+<!-- ═══════════════ LOBBY HOST ═══════════════ -->
+<div id="screen-lobby-host" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar">
+    <span class="topbar-title">Real Life Among Us</span>
+    <div class="topbar-right" id="tb-host"></div>
+  </div>
+  <div style="padding:14px 14px 0;width:100%;">
+    <div class="card" style="background:#0d0d18;">
+      <span class="sec-lbl">Lobby Code — share with players</span>
+      <div class="lcode" id="lcode-host">----</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span class="sec-lbl" style="margin:0;">Players</span>
+        <span id="host-p-badge" class="badge b-crew">0 / 10</span>
+      </div>
+      <div id="host-p-list" class="scroll"></div>
+    </div>
+    <div class="card">
+      <span class="sec-lbl">Settings</span>
+      <div class="lbl-row"><span class="lbl-sm">Imposters</span><span id="v-imp" style="font-size:13px;font-weight:800;">1</span></div>
+      <input type="range" id="s-imp" min="1" max="2" value="1" oninput="document.getElementById('v-imp').textContent=this.value;saveSettings();">
+      <div class="lbl-row"><span class="lbl-sm">Kill Cooldown (sec)</span><span id="v-cd" style="font-size:13px;font-weight:800;">30</span></div>
+      <input type="range" id="s-cd" min="10" max="60" value="30" step="5" oninput="document.getElementById('v-cd').textContent=this.value;saveSettings();">
+      <div class="lbl-row"><span class="lbl-sm">Discussion Time (sec)</span><span id="v-dt" style="font-size:13px;font-weight:800;">180</span></div>
+      <input type="range" id="s-dt" min="60" max="300" value="180" step="30" oninput="document.getElementById('v-dt').textContent=this.value;saveSettings();" style="margin-bottom:0;">
+    </div>
+    <div class="card">
+      <span class="sec-lbl">Tasks</span>
+      <div id="task-setup-list"></div>
+      <div style="margin-top:10px;">
+        <input type="text" id="ti-name" placeholder="Task name (e.g. Inspect fireplace)" style="margin-bottom:6px;" maxlength="50" />
+        <div class="input-row">
+          <input type="text" id="ti-loc" placeholder="Location (e.g. Living Room)" maxlength="40" />
+          <button class="btn btn-dark btn-sm" onclick="addTask()" style="margin-bottom:0;">+ Add</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-white" id="start-btn" onclick="startGame()" disabled>Start Game</button>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:-2px;">Need at least 4 players & 1 task</p>
+  </div>
+</div>
+
+<!-- ═══════════════ LOBBY PLAYER ═══════════════ -->
+<div id="screen-lobby-player" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar">
+    <span class="topbar-title">Real Life Among Us</span>
+    <div class="topbar-right" id="tb-player"></div>
+  </div>
+  <div style="padding:14px 14px 0;width:100%;">
+    <div class="card" style="background:#0d0d18;">
+      <span class="sec-lbl">Lobby Code</span>
+      <div class="lcode" id="lcode-player">----</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span class="sec-lbl" style="margin:0;">Players</span>
+        <span id="player-p-badge" class="badge b-crew">0</span>
+      </div>
+      <div id="player-p-list" class="scroll"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:700;padding:4px 0;">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);"></div>
+      Waiting for host to start...
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ROLE REVEAL ═══════════════ -->
+<div id="screen-role" class="screen hidden" style="padding:30px 16px 40px;">
+  <div id="role-char" style="text-align:center;margin-bottom:14px;"></div>
+  <div id="role-card"></div>
+  <div id="imp-fellows-card" class="card hidden">
+    <span class="sec-lbl">Fellow Imposters</span>
+    <div id="imp-fellows-list"></div>
+  </div>
+  <button class="btn btn-white" onclick="goToGame()">I'm Ready →</button>
+</div>
+
+<!-- ═══════════════ GAME: CREW ═══════════════ -->
+<div id="screen-game-crew" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar">
+    <span class="topbar-title">Real Life Among Us</span>
+    <div class="topbar-right" id="tb-crew"></div>
+  </div>
+  <div style="padding:14px 14px 0;width:100%;">
+    <button class="btn btn-outline" id="crew-role-btn" onclick="toggleRole('crew')" style="margin-bottom:12px;">Click for Role</button>
+    <div id="crew-role-panel" class="role-panel rp-crew hidden" style="margin-bottom:12px;">
+      <div class="rp-title">🚀 CREWMATE</div>
+      <div class="rp-desc">Complete all tasks before the imposters eliminate the crew. Vote them out during meetings.</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-title">Tasks Progress Bar</div>
+      <div class="prog-track"><div class="prog-fill" id="crew-prog" style="width:0%"></div></div>
+    </div>
+    <div id="crew-tasks" style="margin-bottom:14px;"></div>
+    <button class="act-btn" onclick="pressEmergency()">Emergency Meeting</button>
+    <button class="act-btn" onclick="reportKill()">Report Kill</button>
+    <button class="act-btn" style="color:var(--muted);border-color:rgba(255,255,255,0.1);" onclick="confirmDead()">Died</button>
+    <div class="footer">© Real Life Among Us</div>
+  </div>
+</div>
+
+<!-- ═══════════════ GAME: IMP ═══════════════ -->
+<div id="screen-game-imp" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar">
+    <span class="topbar-title">Real Life Among Us</span>
+    <div class="topbar-right" id="tb-imp"></div>
+  </div>
+  <div style="padding:14px 14px 0;width:100%;">
+    <button class="btn btn-outline" id="imp-role-btn" onclick="toggleRole('imp')" style="margin-bottom:12px;">Click for Role</button>
+    <div id="imp-role-panel" class="role-panel rp-imp hidden" style="margin-bottom:12px;">
+      <div class="rp-title">🔪 IMPOSTER</div>
+      <div id="imp-role-fellows-txt" class="rp-desc">Eliminate crewmates. Avoid getting voted out.</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-title">Tasks Progress Bar</div>
+      <div class="prog-track"><div class="prog-fill" id="imp-prog" style="width:0%"></div></div>
+    </div>
+    <div id="imp-tasks" style="margin-bottom:14px;"></div>
+    <button class="act-btn" onclick="pressEmergency()">Emergency Meeting</button>
+    <button class="act-btn" onclick="reportKill()">Report Kill</button>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="act-btn act-sab" style="flex:1;margin-bottom:0;" onclick="notify('Sabotage: create a real-life distraction!')">Sabotage ▾</button>
+      <button class="act-btn act-kill" id="kill-btn" style="flex:1;margin-bottom:0;" onclick="pressKill()">Kill ▾</button>
+    </div>
+    <div id="kill-cd-txt" style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px;font-weight:700;"></div>
+    <button class="act-btn" style="color:var(--muted);border-color:rgba(255,255,255,0.1);margin-top:4px;" onclick="confirmDead()">Died</button>
+    <div class="footer">© Real Life Among Us</div>
+  </div>
+</div>
+
+<!-- ═══════════════ DEAD SCREEN ═══════════════ -->
+<div id="screen-dead" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar">
+    <span class="topbar-title">Real Life Among Us</span>
+    <div class="topbar-right" id="tb-dead"></div>
+  </div>
+  <div style="padding:20px 16px 0;width:100%;text-align:center;">
+    <div style="font-size:70px;margin-bottom:12px;" class="float">👻</div>
+    <div style="font-size:24px;font-weight:900;color:#777;margin-bottom:16px;">YOU ARE DEAD</div>
+    <div class="dead-box" style="text-align:left;">
+      <p style="font-size:15px;font-weight:900;color:white;margin-bottom:10px;">You are currently dead.</p>
+      <p style="font-size:13px;color:var(--muted);line-height:1.8;font-weight:600;">Please <strong style="color:white;">lay down</strong> exactly where you are and wait. Do not move from your spot until someone reports your body or an emergency meeting is called.</p>
+    </div>
+    <div style="background:rgba(79,195,247,0.06);border:1px solid rgba(79,195,247,0.18);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.7;font-weight:600;text-align:left;">
+      👁 You can still watch the game. Task progress and other deaths are shown below.
+    </div>
+    <div class="prog-wrap" style="text-align:left;">
+      <div class="prog-title" style="font-size:14px;margin-bottom:5px;">Crew Task Progress</div>
+      <div class="prog-track"><div class="prog-fill" id="dead-prog" style="width:0%"></div></div>
+    </div>
+    <div class="card" style="text-align:left;margin-top:4px;">
+      <span class="sec-lbl">Also Dead</span>
+      <div id="dead-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DISCUSSION ═══════════════ -->
+<div id="screen-discussion" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar">
+    <span class="topbar-title">Real Life Among Us</span>
+    <div class="topbar-right" id="tb-disc"></div>
+  </div>
+  <div style="padding:14px 14px 0;width:100%;">
+    <div class="em-box">
+      <div class="em-title" id="em-heading">Emergency Meeting!</div>
+
+      <!-- Gather phase -->
+      <div id="gather-phase">
+        <div class="em-sub">Head to the meeting area!</div>
+        <div class="em-timer" id="gather-time">15 seconds</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;">All players shown below</div>
+        <div class="vote-grid" id="gather-player-grid" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Vote phase -->
+      <div id="vote-phase" class="hidden">
+        <div class="em-sub">Time remaining before vote:</div>
+        <div class="em-timer" id="vote-timer">3:00</div>
+        <div class="vote-grid" id="vote-grid"></div>
+        <div id="vote-actions">
+          <div id="vote-sel-txt" style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700;min-height:18px;"></div>
+          <button class="btn btn-white" id="confirm-vote" onclick="confirmVote()" disabled style="margin-bottom:6px;">Confirm Vote</button>
+          <button class="btn btn-ghost" onclick="skipVote()">Skip (no vote)</button>
+        </div>
+        <div id="vote-done" class="hidden" style="font-size:13px;color:#7ed07e;font-weight:900;padding:12px 0;">✓ Vote submitted — waiting for others...</div>
+      </div>
+    </div>
+    <div class="footer">© Real Life Among Us</div>
+  </div>
+</div>
+
+<!-- ═══════════════ VOTE RESULT ═══════════════ -->
+<div id="screen-vote-result" class="screen hidden" style="padding:0 0 40px;">
+  <div class="topbar"><span class="topbar-title">Real Life Among Us</span></div>
+  <div style="padding:20px 16px 0;width:100%;text-align:center;">
+    <div style="font-size:20px;font-weight:900;margin-bottom:16px;">Vote Results</div>
+    <div id="vr-ejected-char" style="margin-bottom:14px;"></div>
+    <div class="card" style="text-align:left;margin-bottom:12px;">
+      <span class="sec-lbl">Who voted for who</span>
+      <div id="vr-breakdown"></div>
+    </div>
+    <div id="vr-msg" style="font-size:14px;line-height:1.8;margin-bottom:6px;font-weight:700;"></div>
+    <div id="vr-role" style="font-size:13px;margin-bottom:20px;font-weight:800;"></div>
+    <button class="btn btn-white" id="vr-continue" onclick="backToGame()">Continue Game →</button>
+    <button class="btn btn-danger hidden" id="vr-mark-dead" onclick="markEjectedDead()">I Was Ejected — Mark Me Dead</button>
+  </div>
+</div>
+
+<!-- ═══════════════ VICTORY ═══════════════ -->
+<div id="screen-victory" class="screen hidden" style="padding:40px 16px;">
+  <div class="float" style="font-size:78px;text-align:center;margin-bottom:14px;" id="vic-icon">🎉</div>
+  <div class="v-title" id="vic-title">CREWMATES WIN!</div>
+  <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.7;font-weight:600;" id="vic-sub"></div>
+  <div class="card" style="text-align:left;margin-bottom:14px;">
+    <span class="sec-lbl">All Players</span>
+    <div id="vic-list"></div>
+  </div>
+  <button class="btn btn-white" onclick="playAgain()">Play Again</button>
+  <button class="btn btn-ghost" onclick="showScreen('home')">← Main Menu</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CHARACTER SVG
+// ══════════════════════════════════════════════
+const CHARS = [
+  {id:'cyan',   body:'#38c9c9', shade:'#239999', name:'Cyan'  },
+  {id:'blue',   body:'#1a3ab5', shade:'#122880', name:'Blue'  },
+  {id:'red',    body:'#c0392b', shade:'#922b21', name:'Red'   },
+  {id:'green',  body:'#1b7a1b', shade:'#145a14', name:'Green' },
+  {id:'lime',   body:'#4cde16', shade:'#30b00a', name:'Lime'  },
+  {id:'pink',   body:'#e87dac', shade:'#c4527d', name:'Pink'  },
+  {id:'white',  body:'#d0d0d0', shade:'#a0a0a0', name:'White' },
+  {id:'orange', body:'#e07b1b', shade:'#b55e10', name:'Orange'},
+  {id:'purple', body:'#7b3fb5', shade:'#5c2d8a', name:'Purple'},
+  {id:'brown',  body:'#7b3f1e', shade:'#5c2d12', name:'Brown' },
+];
+
+function svgChar(colorId, w, h, ghost, deadX) {
+  const c = CHARS.find(x=>x.id===colorId)||CHARS[0];
+  const body  = ghost ? '#3a3a3a' : c.body;
+  const shade = ghost ? '#252525' : c.shade;
+  const visor = ghost ? '#404040' : '#a8d8ea';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg">
+    <rect x="32" y="22" width="10" height="16" rx="3" fill="${shade}"/>
+    <ellipse cx="22" cy="30" rx="18" ry="20" fill="${body}"/>
+    <ellipse cx="22" cy="14" rx="14" ry="13" fill="${body}"/>
+    <ellipse cx="21" cy="13" rx="9" ry="8" fill="${visor}" opacity="0.9"/>
+    <ellipse cx="19" cy="11" rx="3" ry="2.5" fill="white" opacity="0.45"/>
+    <rect x="12" y="22" width="18" height="5" fill="${shade}" rx="2"/>
+    <rect x="11" y="44" width="10" height="10" rx="5" fill="${shade}"/>
+    <rect x="24" y="44" width="10" height="10" rx="5" fill="${shade}"/>
+    <ellipse cx="22" cy="54" rx="13" ry="2.2" fill="rgba(0,0,0,0.25)"/>
+    ${deadX ? `<text x="3" y="38" font-size="34" fill="#e05252" font-weight="900" opacity="0.9" font-family="sans-serif">✕</text>` : ''}
+  </svg>`;
+}
+
+function miniChar(colorId, ghost) {
+  return svgChar(colorId, 22, 26, ghost||false, false);
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const S = {
+  myName:'', myColor:'cyan', myId: Math.random().toString(36).slice(2,9),
+  isHost:false, lobbyCode:'', role:'', isAlive:true,
+  myVote:null, voteSubmitted:false,
+  killCooldown:0, killTimer:null, discTimer:null, gatherTimer:null,
+};
+
+// ══════════════════════════════════════════════
+//  LOCAL STORAGE (cross-tab)
+// ══════════════════════════════════════════════
+const KEY = () => 'airl2_' + S.lobbyCode;
+const TSK = () => 'airl2_' + S.lobbyCode + '_ts';
+function getLS() { try{return JSON.parse(localStorage.getItem(KEY())||'null');}catch{return null;} }
+function setLS(d) { localStorage.setItem(KEY(), JSON.stringify(d)); localStorage.setItem(TSK(), Date.now()+''); }
+function mkLobby(code) {
+  const d = { code, phase:'lobby', players:[], tasks:[], settings:{impCount:1,killCooldown:30,discTime:180},
+    taskProgress:{}, votes:{}, meetingType:null, meetingCaller:null, winner:null, ejectedId:null, gameEvent:null };
+  S.lobbyCode = code; setLS(d); return d;
+}
+
+let pollId=null, lastTs=0;
+function poll(fn){ stopPoll(); pollId=setInterval(()=>{ const t=parseInt(localStorage.getItem(TSK())||'0'); if(t!==lastTs){lastTs=t;const d=getLS();if(d)fn(d);} },500); }
+function stopPoll(){ if(pollId){clearInterval(pollId);pollId=null;} }
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+function makeStars() {
+  const c=document.getElementById('stars');
+  for(let i=0;i<70;i++){
+    const s=document.createElement('div'); s.className='star';
+    const sz=Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--dl:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+}
+
+function buildCharGrid() {
+  const g=document.getElementById('char-grid');
+  CHARS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='char-opt'+(c.id===S.myColor?' sel':'');
+    el.innerHTML=svgChar(c.id,44,52,false,false)+`<span>${c.name}</span>`;
+    el.onclick=()=>{ document.querySelectorAll('.char-opt').forEach(x=>x.classList.remove('sel')); el.classList.add('sel'); S.myColor=c.id; };
+    g.appendChild(el);
+  });
+}
+
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden')); document.getElementById('screen-'+id).classList.remove('hidden'); }
+function notify(msg,dur=3500){ const el=document.getElementById('notif'); el.textContent=msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),dur); }
+function genCode(){ return Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random()*24)]).join(''); }
+
+function setTopbar(id, name, colorId) {
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML=miniChar(colorId)+`<span class="topbar-name">${name} ▾</span>`;
+}
+
+// ══════════════════════════════════════════════
+//  HOME
+// ══════════════════════════════════════════════
+function goCreate() {
+  const n=document.getElementById('home-name').value.trim();
+  if(!n){notify('Enter your name first');return;}
+  S.myName=n; S.isHost=true;
+  const code=genCode(), d=mkLobby(code);
+  d.players.push({id:S.myId,name:n,color:S.myColor,isHost:true,alive:true,role:''});
+  setLS(d);
+  document.getElementById('lcode-host').textContent=code;
+  setTopbar('tb-host',n,S.myColor);
+  renderHostLobby(d);
+  showScreen('lobby-host');
+  poll(onLobbyHost);
+}
+function goJoin() {
+  const n=document.getElementById('home-name').value.trim();
+  if(!n){notify('Enter your name first');return;}
+  S.myName=n; showScreen('join');
+}
+function joinLobby() {
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  if(code.length!==4){notify('Enter a 4-letter code');return;}
+  S.lobbyCode=code;
+  const d=getLS();
+  if(!d){notify('Lobby not found');return;}
+  if(d.phase!=='lobby'){notify('Game already started');return;}
+  if(!d.players.find(p=>p.id===S.myId))
+    d.players.push({id:S.myId,name:S.myName,color:S.myColor,isHost:false,alive:true,role:''});
+  setLS(d);
+  document.getElementById('lcode-player').textContent=code;
+  setTopbar('tb-player',S.myName,S.myColor);
+  renderPlayerLobby(d);
+  showScreen('lobby-player');
+  poll(onLobbyPlayer);
+}
+
+// ══════════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════════
+function pRow(p) {
+  return `<div class="p-row"><div style="width:24px;height:28px;flex-shrink:0;">${miniChar(p.color)}</div><span class="p-name">${p.name}</span>${p.isHost?'<span class="badge b-host">HOST</span>':''}</div>`;
+}
+function renderHostLobby(d) {
+  document.getElementById('host-p-badge').textContent=d.players.length+' / 10';
+  document.getElementById('host-p-list').innerHTML=d.players.map(pRow).join('');
+  document.getElementById('start-btn').disabled=(d.players.length<4||d.tasks.length<1);
+  const tl=document.getElementById('task-setup-list');
+  tl.innerHTML=d.tasks.map((t,i)=>{
+    const nm=typeof t==='object'?t.name:t, loc=typeof t==='object'?t.location:'';
+    return `<div class="t-row" style="cursor:default;">
+      <div class="t-text" style="flex:1;"><div class="t-name">${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
+      <button class="btn btn-ghost btn-sm" onclick="removeTask(${i})" style="color:var(--red);border-color:rgba(224,82,82,0.35);">✕</button>
+    </div>`;
+  }).join('')||`<p style="font-size:12px;color:var(--muted);">No tasks yet.</p>`;
+}
+function renderPlayerLobby(d) {
+  document.getElementById('player-p-badge').textContent=d.players.length;
+  document.getElementById('player-p-list').innerHTML=d.players.map(pRow).join('');
+}
+function onLobbyHost(d){ renderHostLobby(d); if(d.phase==='game'){stopPoll();revealRole(d);} }
+function onLobbyPlayer(d){ renderPlayerLobby(d); if(d.phase==='game'){stopPoll();revealRole(d);} }
+
+// ══════════════════════════════════════════════
+//  SETTINGS & TASKS
+// ══════════════════════════════════════════════
+function saveSettings() {
+  const d=getLS(); if(!d) return;
+  d.settings.impCount=parseInt(document.getElementById('s-imp').value);
+  d.settings.killCooldown=parseInt(document.getElementById('s-cd').value);
+  d.settings.discTime=parseInt(document.getElementById('s-dt').value);
+  setLS(d);
+}
+function addTask() {
+  const ni=document.getElementById('ti-name'), li=document.getElementById('ti-loc');
+  const nm=ni.value.trim(); if(!nm){notify('Enter a task name');return;}
+  const loc=li.value.trim()||'Unknown';
+  const d=getLS(); if(!d) return;
+  d.tasks.push({name:nm,location:loc}); setLS(d);
+  ni.value=''; li.value=''; renderHostLobby(d);
+}
+function removeTask(i){ const d=getLS(); if(!d) return; d.tasks.splice(i,1); setLS(d); renderHostLobby(d); }
+
+// ══════════════════════════════════════════════
+//  START GAME
+// ══════════════════════════════════════════════
+function startGame() {
+  const d=getLS(); if(!d) return;
+  const shuf=[...d.players].sort(()=>Math.random()-.5);
+  const impCount=Math.min(d.settings.impCount,Math.floor(d.players.length/3));
+  const impIds=shuf.slice(0,impCount).map(p=>p.id);
+  d.players.forEach(p=>{ p.role=impIds.includes(p.id)?'imposter':'crewmate'; p.alive=true; });
+  d.players.filter(p=>p.role==='crewmate').forEach(p=>{ d.taskProgress[p.id]={}; d.tasks.forEach((_,i)=>{d.taskProgress[p.id][i]=false;}); });
+  d.phase='game'; d.gameEvent={type:'start',ts:Date.now()}; setLS(d);
+}
+
+// ══════════════════════════════════════════════
+//  ROLE REVEAL
+// ══════════════════════════════════════════════
+function revealRole(d) {
+  const me=d.players.find(p=>p.id===S.myId); if(!me) return;
+  S.role=me.role;
+  document.getElementById('role-char').innerHTML=svgChar(me.color,90,105,false,false)+`<div style="font-size:15px;font-weight:800;margin-top:8px;">${me.name}</div>`;
+  if(me.role==='imposter'){
+    document.getElementById('role-card').innerHTML=`<div class="role-panel rp-imp"><div class="rp-title">🔪 IMPOSTER</div><div class="rp-desc">Blend in. Kill crewmates when no one is watching.</div></div>`;
+    const fellows=d.players.filter(p=>p.role==='imposter'&&p.id!==S.myId);
+    if(fellows.length){ document.getElementById('imp-fellows-card').classList.remove('hidden'); document.getElementById('imp-fellows-list').innerHTML=fellows.map(pRow).join(''); }
+  } else {
+    document.getElementById('role-card').innerHTML=`<div class="role-panel rp-crew"><div class="rp-title">🚀 CREWMATE</div><div class="rp-desc">Complete all tasks. Vote out the imposters.</div></div>`;
+  }
+  showScreen('role');
+}
+
+// ══════════════════════════════════════════════
+//  GO TO GAME
+// ══════════════════════════════════════════════
+function goToGame() {
+  S.isAlive=true;
+  const d=getLS();
+  if(S.role==='imposter'){
+    setTopbar('tb-imp',S.myName,S.myColor);
+    if(d){ const f=d.players.filter(p=>p.role==='imposter'&&p.id!==S.myId); if(f.length) document.getElementById('imp-role-fellows-txt').textContent='Fellow imposters: '+f.map(p=>p.name).join(', '); }
+    renderImpTasks(); startKillCD(); showScreen('game-imp'); pollImp();
+  } else {
+    setTopbar('tb-crew',S.myName,S.myColor);
+    renderCrewTasks(); showScreen('game-crew'); pollCrew();
+  }
+}
+
+function toggleRole(who) {
+  const pid=who==='crew'?'crew-role-panel':'imp-role-panel';
+  const bid=who==='crew'?'crew-role-btn':'imp-role-btn';
+  const p=document.getElementById(pid), b=document.getElementById(bid);
+  const hidden=p.classList.contains('hidden');
+  p.classList.toggle('hidden');
+  b.textContent=hidden?'Hide Role':'Click for Role';
+}
+
+// ══════════════════════════════════════════════
+//  TASKS
+// ══════════════════════════════════════════════
+function calcPct(d) {
+  if(!d.tasks||!d.tasks.length) return 0;
+  const crew=d.players.filter(p=>p.role==='crewmate'); if(!crew.length) return 0;
+  let done=0,tot=0;
+  crew.forEach(p=>{ const pg=d.taskProgress[p.id]||{}; tot+=d.tasks.length; done+=Object.values(pg).filter(Boolean).length; });
+  return tot?Math.round(done/tot*100):0;
+}
+
+function renderCrewTasks() {
+  const d=getLS(); if(!d) return;
+  const pg=d.taskProgress[S.myId]||{};
+  const done=Object.values(pg).filter(Boolean).length;
+  const pct=d.tasks.length?Math.round(done/d.tasks.length*100):0;
+  const bar=document.getElementById('crew-prog'); if(bar) bar.style.width=pct+'%';
+  const list=document.getElementById('crew-tasks'); if(!list) return;
+  list.innerHTML=d.tasks.map((t,i)=>{
+    const isDone=pg[i], nm=typeof t==='object'?t.name:t, loc=typeof t==='object'?t.location:'';
+    return `<div class="t-row ${isDone?'done':''}" onclick="toggleTask(${i})">
+      <div class="t-box"><span class="t-chk">${isDone?'✓':''}</span></div>
+      <div class="t-text"><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
+    </div>`;
+  }).join('');
+}
+function renderImpTasks() {
+  const d=getLS(); if(!d) return;
+  const pct=calcPct(d);
+  const bar=document.getElementById('imp-prog'); if(bar) bar.style.width=pct+'%';
+  const list=document.getElementById('imp-tasks'); if(!list) return;
+  list.innerHTML=d.tasks.map((t,i)=>{
+    const nm=typeof t==='object'?t.name:t, loc=typeof t==='object'?t.location:'';
+    return `<div class="t-row" style="cursor:default;opacity:0.55;">
+      <div class="t-box"></div>
+      <div class="t-text"><div class="t-name">Task ${i+1}: ${nm}</div>${loc?`<div class="t-loc">Location: ${loc}</div>`:''}</div>
+    </div>`;
+  }).join('');
+}
+function toggleTask(i) {
+  const d=getLS(); if(!d||!d.taskProgress[S.myId]) return;
+  d.taskProgress[S.myId][i]=!d.taskProgress[S.myId][i];
+  setLS(d); renderCrewTasks(); checkWin(d);
+}
+
+// ══════════════════════════════════════════════
+//  KILL
+// ══════════════════════════════════════════════
+function startKillCD() {
+  const d=getLS(); S.killCooldown=d?d.settings.killCooldown:30;
+  const btn=document.getElementById('kill-btn'); const txt=document.getElementById('kill-cd-txt');
+  if(btn) btn.style.opacity='0.45';
+  if(S.killTimer) clearInterval(S.killTimer);
+  S.killTimer=setInterval(()=>{
+    S.killCooldown--;
+    if(txt) txt.textContent=S.killCooldown>0?`Kill cooldown: ${S.killCooldown}s`:'Kill ready';
+    if(btn) btn.style.opacity=S.killCooldown>0?'0.45':'1';
+    if(S.killCooldown<=0) clearInterval(S.killTimer);
+  },1000);
+  if(txt) txt.textContent=`Kill cooldown: ${S.killCooldown}s`;
+}
+function pressKill() {
+  if(S.killCooldown>0){notify(`Kill on cooldown — ${S.killCooldown}s remaining`);return;}
+  const d=getLS(); if(!d) return;
+  const alive=d.players.filter(p=>p.alive&&p.id!==S.myId&&p.role==='crewmate');
+  if(!alive.length){notify('No crewmates nearby');return;}
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.87);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML=`<div style="background:#111118;border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:20px;width:100%;max-width:360px;">
+    <div style="font-size:17px;font-weight:900;text-align:center;color:var(--red);margin-bottom:14px;">☠ Select Target</div>
+    ${alive.map(p=>`<div class="p-row" style="cursor:pointer;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.09);" onclick="killPlayer('${p.id}')"><div style="width:26px;height:30px;">${miniChar(p.color)}</div><span class="p-name">${p.name}</span></div>`).join('')}
+    <button class="btn btn-ghost" style="margin-top:12px;" onclick="this.closest('[style*=fixed]').remove()">Cancel</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function killPlayer(tid) {
+  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif')e.remove();});
+  const d=getLS(); if(!d) return;
+  const t=d.players.find(p=>p.id===tid); if(!t) return;
+  t.alive=false; d.gameEvent={type:'kill',victimName:t.name,ts:Date.now()};
+  setLS(d); notify('💀 Killed '+t.name); startKillCD(); checkWin(d);
+}
+
+// ══════════════════════════════════════════════
+//  MEETING
+// ══════════════════════════════════════════════
+function pressEmergency() {
+  const d=getLS(); if(!d||d.phase!=='game') return;
+  d.phase='discussion'; d.votes={}; d.meetingType='emergency'; d.meetingCaller=S.myName;
+  d.gameEvent={type:'emergency',by:S.myId,byName:S.myName,ts:Date.now()}; setLS(d);
+  notify('🚨 Emergency! Get to the meeting area!'); startDiscussion(d);
+}
+function reportKill() {
+  const d=getLS(); if(!d||d.phase!=='game') return;
+  d.phase='discussion'; d.votes={}; d.meetingType='report'; d.meetingCaller=S.myName;
+  d.gameEvent={type:'report',by:S.myId,byName:S.myName,ts:Date.now()}; setLS(d);
+  notify('☠ Body reported! Get to the meeting area!'); startDiscussion(d);
+}
+
+// ══════════════════════════════════════════════
+//  DEATH
+// ══════════════════════════════════════════════
+function confirmDead() {
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML=`<div style="background:#111118;border:1px solid rgba(255,255,255,0.16);border-radius:14px;padding:24px;width:100%;max-width:340px;text-align:center;">
+    <div style="font-size:46px;margin-bottom:12px;">💀</div>
+    <div style="font-size:17px;font-weight:900;margin-bottom:10px;">Confirm Death</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;font-weight:600;line-height:1.6;">Are you sure you were killed? Stay in place once you confirm.</p>
+    <button class="btn btn-danger" onclick="markDead()" style="margin-bottom:8px;">Yes, I'm Dead</button>
+    <button class="btn btn-ghost" onclick="this.closest('[style*=fixed]').remove()">Cancel</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function markDead() {
+  document.querySelectorAll('[style*="position:fixed"]').forEach(e=>{if(e.id!=='notif')e.remove();});
+  const d=getLS(); if(!d) return;
+  const me=d.players.find(p=>p.id===S.myId);
+  if(me){me.alive=false;d.gameEvent={type:'death',pid:S.myId,ts:Date.now()};setLS(d);}
+  S.isAlive=false; if(S.killTimer)clearInterval(S.killTimer);
+  stopPoll(); showDeadScreen(d); pollDead(); checkWin(d);
+}
+function showDeadScreen(d) {
+  setTopbar('tb-dead',S.myName,S.myColor);
+  const pct=calcPct(d);
+  const bar=document.getElementById('dead-prog'); if(bar) bar.style.width=pct+'%';
+  const others=d.players.filter(p=>!p.alive&&p.id!==S.myId);
+  document.getElementById('dead-list').innerHTML=others.length
+    ? others.map(p=>`<div class="p-row"><div style="width:24px;height:28px;">${miniChar(p.color,true)}</div><span class="p-name" style="color:#666;">${p.name}</span><span class="badge b-dead">dead</span></div>`).join('')
+    : `<p style="font-size:12px;color:var(--muted);">No other dead players yet.</p>`;
+  showScreen('dead');
+}
+
+// ══════════════════════════════════════════════
+//  DISCUSSION
+// ══════════════════════════════════════════════
+function startDiscussion(d) {
+  stopPoll(); if(S.killTimer)clearInterval(S.killTimer);
+  if(S.discTimer)clearInterval(S.discTimer); if(S.gatherTimer)clearInterval(S.gatherTimer);
+  S.myVote=null; S.voteSubmitted=false;
+
+  setTopbar('tb-disc',S.myName,S.myColor);
+  const hEl=document.getElementById('em-heading');
+  if(hEl) hEl.textContent=d.meetingType==='report'?'Body Reported!':'Emergency Meeting!';
+
+  // Show gather, hide vote
+  document.getElementById('gather-phase').classList.remove('hidden');
+  document.getElementById('vote-phase').classList.add('hidden');
+  document.getElementById('vote-done').classList.add('hidden');
+  document.getElementById('vote-actions').classList.remove('hidden');
+  document.getElementById('confirm-vote').disabled=true;
+  document.getElementById('vote-sel-txt').textContent='';
+
+  // Gather grid: show all alive players
+  const gg=document.getElementById('gather-player-grid');
+  if(gg) gg.innerHTML=d.players.filter(p=>p.alive).map(p=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+      ${svgChar(p.color,40,47,false,false)}
+      <span style="font-size:10px;font-weight:800;color:white;">${p.name}</span>
+    </div>`).join('');
+
+  showScreen('discussion');
+
+  // 15s gather countdown
+  let gs=15;
+  const gEl=document.getElementById('gather-time'); if(gEl) gEl.textContent='15 seconds';
+  S.gatherTimer=setInterval(()=>{
+    gs--;
+    if(gEl) gEl.textContent=gs+' second'+(gs!==1?'s':'');
+    if(gs<=0){
+      clearInterval(S.gatherTimer);
+      document.getElementById('gather-phase').classList.add('hidden');
+      document.getElementById('vote-phase').classList.remove('hidden');
+      renderVoteGrid(getLS()||d);
+      startVoteTimer(d);
+    }
+  },1000);
+
+  poll(onDisc);
+}
+
+function startVoteTimer(d) {
+  let rem=d.settings.discTime;
+  const el=document.getElementById('vote-timer');
+  const fmt=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  if(el) el.textContent=fmt(rem);
+  S.discTimer=setInterval(()=>{
+    rem--;
+    if(el) el.textContent=fmt(rem);
+    if(rem<=0){clearInterval(S.discTimer);endVote();}
+  },1000);
+}
+
+function renderVoteGrid(d) {
+  const g=document.getElementById('vote-grid'); if(!g) return;
+  g.innerHTML=d.players.map(p=>{
+    const alive=p.alive;
+    const votes=Object.values(d.votes||{}).filter(v=>v===p.id).length;
+    const iVoted=S.myVote===p.id&&!S.voteSubmitted;
+    const iVotedSub=S.myVote===p.id&&S.voteSubmitted;
+    return `<div class="v-card ${!alive?'dead-vc':''} ${iVoted?'sel':''}" id="vc-${p.id}" onclick="selVote('${p.id}')">
+      ${iVotedSub?`<div class="voted-lbl">VOTED</div>`:''}
+      ${svgChar(p.color,48,56,!alive,false)}
+      ${!alive?`<div class="dead-x-overlay">✕</div>`:''}
+      <div class="v-cname">${p.name}</div>
+      ${votes>0?`<div style="font-size:10px;color:#ffd700;font-weight:900;">${votes}v</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function selVote(pid) {
+  if(S.voteSubmitted) return;
+  const d=getLS(); if(!d) return;
+  const p=d.players.find(x=>x.id===pid); if(!p||!p.alive) return;
+  S.myVote=S.myVote===pid?null:pid;
+  renderVoteGrid(d);
+  const btn=document.getElementById('confirm-vote'), txt=document.getElementById('vote-sel-txt');
+  if(S.myVote){ btn.disabled=false; const np=d.players.find(x=>x.id===S.myVote); if(txt) txt.textContent='Voting for: '+(np?np.name:'?'); }
+  else { btn.disabled=true; if(txt) txt.textContent=''; }
+}
+
+function confirmVote() {
+  if(!S.myVote||S.voteSubmitted) return;
+  const d=getLS(); if(!d) return;
+  d.votes[S.myId]=S.myVote; setLS(d);
+  S.voteSubmitted=true;
+  document.getElementById('vote-actions').classList.add('hidden');
+  document.getElementById('vote-done').classList.remove('hidden');
+  renderVoteGrid(d); checkAllVoted(d);
+}
+function skipVote() {
+  if(S.voteSubmitted) return;
+  const d=getLS(); if(!d) return;
+  d.votes[S.myId]='skip'; setLS(d);
+  S.voteSubmitted=true;
+  document.getElementById('vote-actions').classList.add('hidden');
+  document.getElementById('vote-done').classList.remove('hidden');
+  checkAllVoted(d);
+}
+function onDisc(d) {
+  const voteShowing=!document.getElementById('vote-phase').classList.contains('hidden');
+  if(voteShowing) renderVoteGrid(d);
+  if(d.phase==='vote_result'){clearInterval(S.discTimer);stopPoll();showVoteResult(d);}
+  if(d.winner){clearInterval(S.discTimer);stopPoll();showVictory(d);}
+}
+function checkAllVoted(d) {
+  const alive=d.players.filter(p=>p.alive);
+  const cast=Object.keys(d.votes||{}).filter(id=>alive.find(p=>p.id===id)).length;
+  if(cast>=alive.length) endVote();
+}
+function endVote() {
+  clearInterval(S.discTimer); stopPoll();
+  const d=getLS(); if(!d) return;
+  const tally={};
+  Object.values(d.votes||{}).forEach(v=>{ if(v!=='skip') tally[v]=(tally[v]||0)+1; });
+  let ejId=null, mx=0, tied=false;
+  Object.entries(tally).forEach(([id,cnt])=>{ if(cnt>mx){mx=cnt;ejId=id;tied=false;}else if(cnt===mx)tied=true; });
+  if(tied||mx===0) ejId=null;
+  if(ejId){ const ej=d.players.find(p=>p.id===ejId); if(ej) ej.alive=false; }
+  d.ejectedId=ejId; d.phase='vote_result'; d.gameEvent={type:'vote_result',ejectedId:ejId,ts:Date.now()};
+  setLS(d); showVoteResult(d); checkWin(d);
+}
+
+function showVoteResult(d) {
+  const ejId=d.ejectedId, ej=ejId?d.players.find(p=>p.id===ejId):null;
+  const tally={};
+  Object.values(d.votes||{}).forEach(v=>{ if(v!=='skip') tally[v]=(tally[v]||0)+1; });
+  // Breakdown
+  const bkEl=document.getElementById('vr-breakdown');
+  let bk='';
+  d.players.forEach(voter=>{
+    const v=d.votes[voter.id]; if(!v) return;
+    const target=v==='skip'?null:d.players.find(p=>p.id===v);
+    bk+=`<div class="vr-row">
+      <div style="width:22px;height:26px;flex-shrink:0;">${miniChar(voter.color,!voter.alive)}</div>
+      <span style="font-size:12px;font-weight:800;flex:1;">${voter.name}</span>
+      <span style="font-size:11px;color:var(--muted);">→</span>
+      ${target
+        ? `<div style="width:22px;height:26px;flex-shrink:0;margin-left:6px;">${miniChar(target.color)}</div><span style="font-size:12px;font-weight:800;margin-left:4px;">${target.name}</span>`
+        : `<span style="font-size:12px;color:var(--muted);margin-left:6px;font-weight:700;">Skip</span>`}
+    </div>`;
+  });
+  if(bkEl) bkEl.innerHTML=bk||`<p style="font-size:12px;color:var(--muted);">No votes cast.</p>`;
+  // Ejected char
+  const charEl=document.getElementById('vr-ejected-char');
+  if(ej) charEl.innerHTML=svgChar(ej.color,68,80,true,false)+`<div style="font-size:11px;color:#777;margin-top:4px;">was ejected</div>`;
+  else charEl.innerHTML=`<div style="font-size:17px;color:var(--muted);font-weight:900;padding:12px 0;">No one was ejected.</div>`;
+  // Message
+  const msgEl=document.getElementById('vr-msg'), roleEl=document.getElementById('vr-role');
+  const contBtn=document.getElementById('vr-continue'), markBtn=document.getElementById('vr-mark-dead');
+  if(ej){
+    if(msgEl) msgEl.innerHTML=`<strong>${ej.name}</strong> was ejected from the game.`;
+    if(roleEl){ roleEl.textContent=ej.role==='imposter'?'✓ They were an Imposter.':'✗ They were NOT an Imposter.'; roleEl.style.color=ej.role==='imposter'?'#7ed07e':'var(--red)'; }
+    if(ejId===S.myId){ contBtn.classList.add('hidden'); markBtn.classList.remove('hidden'); }
+    else { contBtn.classList.remove('hidden'); markBtn.classList.add('hidden'); }
+  } else {
+    if(msgEl) msgEl.textContent='No majority vote — nobody was ejected.';
+    if(roleEl) roleEl.textContent='';
+    contBtn.classList.remove('hidden'); markBtn.classList.add('hidden');
+  }
+  showScreen('vote-result');
+  poll(d=>{ if(d.winner){stopPoll();showVictory(d);} });
+}
+
+function markEjectedDead() {
+  S.isAlive=false; stopPoll();
+  const d=getLS(); showDeadScreen(d); pollDead();
+}
+function backToGame() {
+  const d=getLS(); if(!d) return;
+  d.phase='game'; d.votes={}; d.ejectedId=null; d.gameEvent={type:'resume',ts:Date.now()}; setLS(d);
+  stopPoll();
+  if(S.isAlive){
+    if(S.role==='imposter'){ setTopbar('tb-imp',S.myName,S.myColor); renderImpTasks(); startKillCD(); showScreen('game-imp'); pollImp(); }
+    else { setTopbar('tb-crew',S.myName,S.myColor); renderCrewTasks(); showScreen('game-crew'); pollCrew(); }
+  } else { showDeadScreen(d); pollDead(); }
+}
+
+// ══════════════════════════════════════════════
+//  POLL HANDLERS
+// ══════════════════════════════════════════════
+function pollCrew(){ poll(d=>{ if(!d)return; renderCrewTasks(); if(d.phase==='discussion'){stopPoll();startDiscussion(d);} if(d.winner){stopPoll();showVictory(d);} }); }
+function pollImp(){  poll(d=>{ if(!d)return; renderImpTasks();  if(d.phase==='discussion'){stopPoll();if(S.killTimer)clearInterval(S.killTimer);startDiscussion(d);} if(d.winner){stopPoll();showVictory(d);} }); }
+function pollDead(){ poll(d=>{ if(!d)return;
+  const pct=calcPct(d), bar=document.getElementById('dead-prog'); if(bar) bar.style.width=pct+'%';
+  const others=d.players.filter(p=>!p.alive&&p.id!==S.myId);
+  const listEl=document.getElementById('dead-list');
+  if(listEl) listEl.innerHTML=others.length?others.map(p=>`<div class="p-row"><div style="width:24px;height:28px;">${miniChar(p.color,true)}</div><span class="p-name" style="color:#666;">${p.name}</span><span class="badge b-dead">dead</span></div>`).join(''):`<p style="font-size:12px;color:var(--muted);">No other dead players yet.</p>`;
+  if(d.phase==='discussion'){stopPoll();startDiscussion(d);} if(d.winner){stopPoll();showVictory(d);} }); }
+
+// ══════════════════════════════════════════════
+//  WIN
+// ══════════════════════════════════════════════
+function checkWin(d) {
+  if(d.winner) return;
+  const aC=d.players.filter(p=>p.alive&&p.role==='crewmate');
+  const aI=d.players.filter(p=>p.alive&&p.role==='imposter');
+  if(d.players.filter(p=>p.role==='imposter').every(p=>!p.alive)){ d.winner='crewmates'; d.phase='end'; d.gameEvent={type:'over',winner:'crewmates',ts:Date.now()}; setLS(d); return; }
+  if(aI.length>=aC.length){ d.winner='imposters'; d.phase='end'; d.gameEvent={type:'over',winner:'imposters',ts:Date.now()}; setLS(d); return; }
+  if(calcPct(d)>=100){ d.winner='crewmates'; d.phase='end'; d.gameEvent={type:'over',winner:'crewmates',reason:'tasks',ts:Date.now()}; setLS(d); return; }
+  setLS(d);
+}
+
+// ══════════════════════════════════════════════
+//  VICTORY
+// ══════════════════════════════════════════════
+function showVictory(d) {
+  stopPoll(); clearInterval(S.discTimer); clearInterval(S.killTimer); clearInterval(S.gatherTimer);
+  const winner=d.winner, iWon=(winner==='crewmates'&&S.role==='crewmate')||(winner==='imposters'&&S.role==='imposter');
+  document.getElementById('vic-icon').textContent=iWon?'🎉':'💀';
+  document.getElementById('vic-title').textContent=winner==='crewmates'?'CREWMATES WIN!':'IMPOSTERS WIN!';
+  document.getElementById('vic-title').style.color=winner==='crewmates'?'#7ed07e':'var(--red)';
+  document.getElementById('vic-sub').textContent=(winner==='crewmates'?(d.gameEvent?.reason==='tasks'?'All tasks completed!':'Imposter voted out!')+(iWon?' You survived.':' Better luck next time.'):('Imposters eliminated the crew!')+(iWon?' Well played.':' You were eliminated.'));
+  document.getElementById('vic-list').innerHTML=d.players.map(p=>`
+    <div class="p-row">
+      <div style="width:26px;height:30px;">${miniChar(p.color,!p.alive)}</div>
+      <span class="p-name">${p.name}</span>
+      <span class="badge ${p.role==='imposter'?'b-imp':'b-crew'}">${p.role==='imposter'?'IMPOSTER':'CREW'}</span>
+      ${!p.alive?`<span class="badge b-dead" style="margin-left:4px;">dead</span>`:''}
+    </div>`).join('');
+  showScreen('victory');
+}
+
+function playAgain() {
+  if(S.isHost){
+    const d=getLS(); if(!d){showScreen('home');return;}
+    d.phase='lobby'; d.players.forEach(p=>{delete p.role;p.alive=true;});
+    d.taskProgress={}; d.votes={}; d.winner=null; d.ejectedId=null; d.gameEvent=null;
+    setLS(d); setTopbar('tb-host',S.myName,S.myColor); renderHostLobby(d); showScreen('lobby-host'); poll(onLobbyHost);
+  } else {
+    setTopbar('tb-player',S.myName,S.myColor); showScreen('lobby-player'); poll(onLobbyPlayer);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════
+makeStars();
+buildCharGrid();
+
+document.getElementById('join-code').addEventListener('input',e=>e.target.value=e.target.value.toUpperCase());
+document.getElementById('join-code').addEventListener('keyup',e=>{if(e.key==='Enter')joinLobby();});
+document.getElementById('home-name').addEventListener('keyup',e=>{if(e.key==='Enter')document.getElementById('home-name').blur();});
+document.getElementById('ti-name').addEventListener('keyup',e=>{if(e.key==='Enter')document.getElementById('ti-loc').focus();});
+document.getElementById('ti-loc').addEventListener('keyup',e=>{if(e.key==='Enter')addTask();});
+</script>
+</body>
+</html>
